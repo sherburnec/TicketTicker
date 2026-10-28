@@ -30,6 +30,28 @@ export interface NamedLocation {
   notes?: string;
 }
 
+export type FineResult = 'Paid' | 'Unpaid' | 'Pending' | 'Reversed';
+
+export interface Citation {
+  id: string;
+  /** ISO date. */
+  date: string;
+  /** HH:MM, 24-hour. */
+  time: string;
+  code: string;
+  officer: string;
+  result: FineResult;
+  fineAmount: number;
+  paidAmount?: number;
+  paidDate?: string;
+  address: string;
+  blockId?: string;
+  namedLocationId?: string;
+  vehicleType?: string;
+  vehicleColor?: string;
+  flags: string[];
+}
+
 export interface CitySettings {
   id: string;
   name: string;

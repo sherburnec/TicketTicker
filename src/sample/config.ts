@@ -17,6 +17,8 @@ export interface SampleConfig {
   pendingShare: number;
   /** Share of Paid citations paid at the escalated amount. */
   escalatedPaidShare: number;
+  /** Share of citations issued at a named-location address (when the city has any). */
+  namedLocationShare: number;
   /** Number of distinct sample officer numbers. */
   officerCount: number;
 }
@@ -30,6 +32,7 @@ export const DEFAULT_SAMPLE_CONFIG: SampleConfig = {
   monthlyVariation: 0.05,
   pendingShare: 0.03,
   escalatedPaidShare: 0.25,
+  namedLocationShare: 0.08,
   officerCount: 12,
 };
 
