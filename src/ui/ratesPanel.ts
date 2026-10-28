@@ -60,6 +60,10 @@ export function createRatesState(input: () => RatesInput | undefined) {
     setAsOf(iso: string | undefined): void {
       asOfOverride = iso || undefined;
     },
+    /** The as-of override and rate overrides now in force, so an export matches what the panel shows. */
+    settings(): { asOf?: string; overrides: RateOverrides } {
+      return { asOf: asOfOverride, overrides };
+    },
     view(): RatesView | undefined {
       const data = input();
       const asOf = data && asOfDate(data.citations, asOfOverride);
@@ -77,7 +81,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string): HTMLE
 }
 
 /** Rates and projections with computed and applied values, override inputs and an as-of date. Call `refresh` after new data loads. */
-export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | undefined): { refresh(): void } {
+export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | undefined, onChange?: () => void): { refresh(): void; settings(): { asOf?: string; overrides: RateOverrides } } {
   const state = createRatesState(input);
 
   function render(): void {
@@ -96,6 +100,7 @@ export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | und
     asOf.addEventListener('change', () => {
       state.setAsOf(asOf.value);
       render();
+      onChange?.();
     });
     const asOfLabel = el('label', 'As-of date ');
     asOfLabel.append(asOf);
@@ -121,6 +126,7 @@ export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | und
           if (field.value.trim() === '') state.clearOverride(key);
           else if (!state.setOverride(key, Number(field.value) / 100)) return;
           render();
+          onChange?.();
         });
         const reset = el('button', 'Reset');
         reset.type = 'button';
@@ -128,6 +134,7 @@ export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | und
         reset.addEventListener('click', () => {
           state.clearOverride(key);
           render();
+          onChange?.();
         });
         cell.append(field, reset);
       }
@@ -153,5 +160,5 @@ export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | und
   }
 
   render();
-  return { refresh: render };
+  return { refresh: render, settings: state.settings };
 }
