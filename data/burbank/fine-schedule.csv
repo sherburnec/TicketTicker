@@ -1,5 +1,5 @@
 citation_code,citation_name,base_amount,escalated_amount,start_date,escalation_days,sample_weight
-CVC-22500(g),Street sweeping,75,100,,,76
+CVC-22500(g),Street sweeping,75,100,,,72
 BMC-6-1,Overtime / time-limit zone,65,90,,,14
-BMC-ART30,Parking meter - no payment,70,95,,,10
-BMC 6-1-1101, Red Curb Parking, 65, 100,,,13
+BMC-ART30,Parking meter - no payment,70,95,,,7
+BMC 6-1-1101, Red Curb Parking, 65, 100,,,7
