@@ -1,5 +1,6 @@
 import { loadCitySource, mountSourcePanel } from './ui/sourcePanel.ts';
 import { importCitationsInWorker, type ImportResult } from './import/citations.ts';
+import { renderImportSummary } from './ui/importSummary.ts';
 
 const app = document.getElementById('app');
 if (app) {
@@ -8,7 +9,8 @@ if (app) {
   const panel = document.createElement('div');
   const loaded = document.createElement('p');
   loaded.textContent = 'No citation data loaded.';
-  app.append(title, panel, loaded);
+  const summary = document.createElement('div');
+  app.append(title, panel, loaded, summary);
 
   // In-memory only for the session (NFR-1).
   let citations: ImportResult | undefined;
@@ -18,8 +20,8 @@ if (app) {
       citations = await importCitationsInWorker(data.csv, source, (done, total) => {
         loaded.textContent = `Importing ${done.toLocaleString()} of ${total.toLocaleString()} rows…`;
       });
-      const { imported, rejected, unmatched } = citations.counts;
-      loaded.textContent = `${data.label}: ${imported.toLocaleString()} imported, ${rejected.toLocaleString()} rejected, ${unmatched.toLocaleString()} unmatched.`;
+      loaded.textContent = data.label;
+      renderImportSummary(summary, citations);
     } catch (e) {
       loaded.textContent = e instanceof Error ? e.message : String(e);
     }
