@@ -3,6 +3,7 @@ import { importCitationsInWorker, type ImportResult } from './import/citations.t
 import { renderImportSummary } from './ui/importSummary.ts';
 import { mountRatesPanel } from './ui/ratesPanel.ts';
 import { mountStreetMap } from './map/streetMap.ts';
+import { mountR3Panel } from './ui/r3Panel.ts';
 
 const app = document.getElementById('app');
 if (app) {
@@ -13,15 +14,18 @@ if (app) {
   loaded.textContent = 'No citation data loaded.';
   const summary = document.createElement('div');
   const rates = document.createElement('div');
+  const hotspots = document.createElement('div');
   const map = document.createElement('div');
   map.style.cssText = 'height:480px;margin:1em 0';
-  app.append(title, panel, loaded, summary, rates, map);
+  app.append(title, panel, loaded, summary, rates, hotspots, map);
 
   // In-memory only for the session (NFR-1).
   let citations: ImportResult | undefined;
   const source = loadCitySource('burbank');
-  mountStreetMap(map, source.city, loadSegments('burbank'));
+  const segments = loadSegments('burbank');
+  const streetMap = mountStreetMap(map, source.city, segments);
   const ratesPanel = mountRatesPanel(rates, () => citations && { citations: citations.citations, ctx: { schedule: source.schedule, city: source.city } });
+  const r3 = mountR3Panel(hotspots, streetMap, () => citations && { citations: citations.citations, blocks: source.blocks, namedLocations: source.namedLocations, segments });
   mountSourcePanel(panel, source, async (data) => {
     try {
       citations = await importCitationsInWorker(data.csv, source, (done, total) => {
@@ -30,6 +34,7 @@ if (app) {
       loaded.textContent = data.label;
       renderImportSummary(summary, citations);
       ratesPanel.refresh();
+      r3.refresh();
     } catch (e) {
       loaded.textContent = e instanceof Error ? e.message : String(e);
     }
