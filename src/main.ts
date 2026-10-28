@@ -6,6 +6,7 @@ import { mountStreetMap } from './map/streetMap.ts';
 import { mountR3Panel } from './ui/r3Panel.ts';
 import { mountR4Panel } from './ui/r4Panel.ts';
 import { mountOfficerPanel } from './ui/officerPanel.ts';
+import { createPatrolStore, mountPatrolSourcePanel } from './ui/patrolSource.ts';
 import { mountExportPanel } from './ui/exportPanel.ts';
 import { buildCityReportModel } from './pdf/cityReport.ts';
 import { asOfDate } from './revenue/schedule.ts';
@@ -15,6 +16,7 @@ if (app) {
   const title = document.createElement('h1');
   title.textContent = 'Citation Insights';
   const panel = document.createElement('div');
+  const patrolPanel = document.createElement('div');
   const loaded = document.createElement('p');
   loaded.textContent = 'No citation data loaded.';
   const summary = document.createElement('div');
@@ -25,7 +27,7 @@ if (app) {
   const exportRoot = document.createElement('div');
   const map = document.createElement('div');
   map.style.cssText = 'height:480px;margin:1em 0';
-  app.append(title, panel, loaded, summary, rates, hotspots, map, locations, officers, exportRoot);
+  app.append(title, panel, patrolPanel, loaded, summary, rates, hotspots, map, locations, officers, exportRoot);
 
   // In-memory only for the session (NFR-1).
   let citations: ImportResult | undefined;
@@ -41,6 +43,9 @@ if (app) {
   const r3 = mountR3Panel(hotspots, streetMap, () => citations && { citations: citations.citations, blocks: source.blocks, namedLocations: source.namedLocations, segments });
   const r4 = mountR4Panel(locations, () => citations && { citations: citations.citations, namedLocations: source.namedLocations });
   const r56 = mountOfficerPanel(officers, streetMap, () => citations && { citations: citations.citations, segments });
+  // Patrol data is held apart from citations; loading it never re-imports them (FR-28). Parsing arrives in 7.3.
+  const patrol = createPatrolStore();
+  mountPatrolSourcePanel(patrolPanel, patrol, () => {});
   mountSourcePanel(panel, source, async (data) => {
     try {
       citations = await importCitationsInWorker(data.csv, source, (done, total) => {
