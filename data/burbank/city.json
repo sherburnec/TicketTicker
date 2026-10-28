@@ -1,0 +1,9 @@
+{
+  "city_id": "burbank",
+  "name": "Burbank, CA",
+  "time_zone": "America/Los_Angeles",
+  "payment_window_days": 21,
+  "extent": { "bbox": [-118.3681039, 34.1452699, -118.2708391, 34.2199003] },
+  "exclusion_zones": [],
+  "depot": { "lat": 34.1808, "lon": -118.309 }
+}

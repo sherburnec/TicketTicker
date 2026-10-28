@@ -1,0 +1,10 @@
+{
+  "city_id": "testville",
+  "name": "Testville",
+  "time_zone": "America/New_York",
+  "payment_window_days": 14,
+  "extent": { "polygon": [[-74.0, 40.0], [-73.9, 40.0], [-73.9, 40.1], [-74.0, 40.1]] },
+  "exclusion_zones": [{ "lat": 40.05, "lon": -73.95, "radius_m": 200 }],
+  "depot": { "lat": 40.02, "lon": -73.98 },
+  "hot_zone_weights": [{ "lat": 40.06, "lon": -73.92, "weight": 3 }]
+}
