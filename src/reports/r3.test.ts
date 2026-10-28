@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildMatchIndex, type BlockInfo } from '../geo/matcher.ts';
 import type { Citation, NamedLocation } from '../types.ts';
-import { createR3State } from '../ui/r3Panel.ts';
+import { createR3State, R3_NOTICE } from '../ui/r3Panel.ts';
 import { blockCentroids, buildHotspots, hotspotFeatures, pinFeatures } from './r3.ts';
 
 const ids = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
@@ -80,5 +80,11 @@ describe('R3 day and hour filters update the map data', () => {
     expect(state.view()!.hotspots.ranked[0]).toMatchObject({ blockId: 'seg-A', count: 6 });
     state.setHour(3);
     expect(mapCount()).toBe(0);
+  });
+});
+
+describe('R3 notice', () => {
+  it('states that citations reflect enforcement activity, not violation rates (FR-25)', () => {
+    expect(R3_NOTICE).toMatch(/enforcement activity, not violation rates/);
   });
 });

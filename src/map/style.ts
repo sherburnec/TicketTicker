@@ -16,6 +16,7 @@ export function localStyle(segments: FeatureCollection): StyleSpecification {
       streets: { type: 'geojson', data: segments as never },
       hotspots: { type: 'geojson', data: EMPTY as never },
       pins: { type: 'geojson', data: EMPTY as never },
+      coverage: { type: 'geojson', data: EMPTY as never },
     },
     layers: [
       { id: 'background', type: 'background', paint: { 'background-color': '#f4f1ea' } },
@@ -35,6 +36,13 @@ export function localStyle(segments: FeatureCollection): StyleSpecification {
           'line-color': ['interpolate', ['linear'], ['get', 'count'], 1, '#f6c35b', 10, '#e8743b', 40, '#b3261e'],
           'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 16, 7],
         },
+      },
+      {
+        id: 'coverage',
+        type: 'line',
+        source: 'coverage',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#1b8a7a', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 16, 7] },
       },
       {
         id: 'pins',

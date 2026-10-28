@@ -11,3 +11,12 @@ export function setHotspotData(map: MapLibreMap, hotspots: FeatureCollection, pi
   (map.getSource('hotspots') as GeoJSONSource).setData(hotspots as never);
   (map.getSource('pins') as GeoJSONSource).setData(pins as never);
 }
+
+/** Replaces the R5 coverage footprint lines on a map built from `localStyle`. */
+export function setCoverageData(map: MapLibreMap, coverage: FeatureCollection): void {
+  if (!map.getSource('coverage')) {
+    map.once('load', () => setCoverageData(map, coverage));
+    return;
+  }
+  (map.getSource('coverage') as GeoJSONSource).setData(coverage as never);
+}
