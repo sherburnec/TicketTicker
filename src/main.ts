@@ -7,6 +7,8 @@ import { mountR3Panel } from './ui/r3Panel.ts';
 import { mountR4Panel } from './ui/r4Panel.ts';
 import { mountOfficerPanel } from './ui/officerPanel.ts';
 import { detectFormat, readHeader, type ColumnMapping, type PatrolFormat } from './patrol/formats.ts';
+import { importPatrolInWorker } from './patrol/importer.ts';
+import { renderPatrolSummary } from './ui/patrolSummary.ts';
 import { mountColumnMapper } from './ui/columnMapper.ts';
 import { createPatrolStore, mountPatrolSourcePanel } from './ui/patrolSource.ts';
 import { mountExportPanel } from './ui/exportPanel.ts';
@@ -20,6 +22,7 @@ if (app) {
   const panel = document.createElement('div');
   const patrolPanel = document.createElement('div');
   const patrolFormat = document.createElement('div');
+  const patrolSummary = document.createElement('div');
   const loaded = document.createElement('p');
   loaded.textContent = 'No citation data loaded.';
   const summary = document.createElement('div');
@@ -30,7 +33,7 @@ if (app) {
   const exportRoot = document.createElement('div');
   const map = document.createElement('div');
   map.style.cssText = 'height:480px;margin:1em 0';
-  app.append(title, panel, patrolPanel, patrolFormat, loaded, summary, rates, hotspots, map, locations, officers, exportRoot);
+  app.append(title, panel, patrolPanel, patrolFormat, patrolSummary, loaded, summary, rates, hotspots, map, locations, officers, exportRoot);
 
   // In-memory only for the session (NFR-1).
   let citations: ImportResult | undefined;
@@ -46,16 +49,25 @@ if (app) {
   const r3 = mountR3Panel(hotspots, streetMap, () => citations && { citations: citations.citations, blocks: source.blocks, namedLocations: source.namedLocations, segments });
   const r4 = mountR4Panel(locations, () => citations && { citations: citations.citations, namedLocations: source.namedLocations });
   const r56 = mountOfficerPanel(officers, streetMap, () => citations && { citations: citations.citations, segments });
-  // Patrol data is held apart from citations; loading it never re-imports them (FR-28). Parsing arrives in 7.3; the detected mapping is passed to it then.
+  // Patrol data is held apart from citations; loading it never re-imports them (FR-28). Parsing arrives in 7.3; later tasks add the aggregate.
   const patrol = createPatrolStore();
   mountPatrolSourcePanel(patrolPanel, patrol, () => {
     patrolFormat.replaceChildren();
+    patrolSummary.replaceChildren();
     const data = patrol.get();
     if (!data) return;
     const headers = readHeader(data.csv);
     const found = detectFormat(headers);
-    const done = (format: PatrolFormat, _mapping: ColumnMapping) => {
+    const done = async (format: PatrolFormat, columns: ColumnMapping) => {
       patrolFormat.textContent = `Detected Format ${format}${found.missing.length ? ' (columns mapped by you)' : ''}.`;
+      try {
+        const result = await importPatrolInWorker({ csv: data.csv, format, columns }, (d, t) => {
+          patrolSummary.textContent = `Importing patrol data: ${Math.round((d / t) * 100)}%`;
+        });
+        renderPatrolSummary(patrolSummary, format, result);
+      } catch (e) {
+        patrolSummary.textContent = e instanceof Error ? e.message : String(e);
+      }
     };
     if (found.missing.length === 0) done(found.format, found.mapping);
     else mountColumnMapper(patrolFormat, headers, found.format, done);
