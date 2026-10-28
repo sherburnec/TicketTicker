@@ -9,6 +9,9 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { streetKey } from '../src/geo/normalize.ts';
+
+export { streetKey };
 
 export interface Address {
   housenumber: number;
@@ -37,29 +40,6 @@ export const BLOCK_COLUMNS = ['segment_id', 'block_number', 'low_address', 'high
 
 /** An address belongs to a segment only within this distance of its line. */
 export const MAX_DISTANCE_M = 40;
-
-const TYPES: Record<string, string> = {
-  avenue: 'ave', ave: 'ave', boulevard: 'blvd', blvd: 'blvd', drive: 'dr', dr: 'dr', street: 'st', st: 'st',
-  place: 'pl', pl: 'pl', road: 'rd', rd: 'rd', lane: 'ln', ln: 'ln', court: 'ct', ct: 'ct', way: 'wy', wy: 'wy',
-  circle: 'cir', cir: 'cir', terrace: 'ter', ter: 'ter', parkway: 'pkwy', pkwy: 'pkwy', highway: 'hwy', hwy: 'hwy',
-  trail: 'trl', trl: 'trl', alley: 'aly', aly: 'aly', square: 'sq', sq: 'sq', point: 'pt', pt: 'pt',
-};
-const DIRECTIONS = new Set(['n', 's', 'e', 'w', 'north', 'south', 'east', 'west']);
-const ORDINALS: Record<string, string> = {
-  first: '1st', second: '2nd', third: '3rd', fourth: '4th', fifth: '5th', sixth: '6th',
-  seventh: '7th', eighth: '8th', ninth: '9th', tenth: '10th', eleventh: '11th', twelfth: '12th',
-};
-
-/**
- * Key used to pair an address with a segment: the street's name and type in canonical form, ignoring case,
- * punctuation and direction words ("W Chandler Blvd", "West Chandler Boulevard South" and "Chandler Boulevard" agree).
- * Streets whose name is a direction ("North Street") are rare; a miss only sends the block to the hand-entry report.
- */
-export function streetKey(name: string): string {
-  const words = name.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim().split(' ');
-  const core = words.filter((w) => !DIRECTIONS.has(w));
-  return (core.length ? core : words).map((w) => TYPES[w] ?? ORDINALS[w] ?? w).join(' ');
-}
 
 /** A plain number, optionally with one unit letter ("1204A"). Ranges, lists, fractions, zero and text are refused. */
 export function parseHouseNumber(raw: string): number | null {

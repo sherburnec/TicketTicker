@@ -745,7 +745,6 @@ To fill one, set `block_number` (a multiple of 100) and `source` to `manual` on 
 | burbank-13585801667-13585801668 | Snaffle Court | no address found |
 | burbank-14758466-1164154749 | Burbank Boulevard | no address found |
 | burbank-14758466-13421931136 | Burbank Boulevard | addresses 916 to 1004 are in different hundreds |
-| burbank-14758466-13421931140 | Burbank Boulevard | addresses 10 to 123 are in different hundreds |
 | burbank-14758466-358545942 | North Victory Boulevard | no address found |
 | burbank-14758467-122932334 | North Victory Boulevard | addresses 400 to 533 are in different hundreds |
 | burbank-14758469-123289211 | South Lake Street | only 1 address found |
@@ -991,6 +990,8 @@ To fill one, set `block_number` (a multiple of 100) and `source` to `manual` on 
 | burbank-21478642-78984701 | South 3rd Street | no address found |
 | burbank-21490268-122935047 | West Alameda Avenue | only 1 address found |
 | burbank-21490268-1832045107 | West Alameda Avenue | no address found |
+| burbank-21490270-6735131572 | East Avenue | no address found |
+| burbank-21490270-78702966 | East Avenue | no address found |
 | burbank-21490271-21490272 | East Avenue | no address found |
 | burbank-21490271-6735131559 | Bethany Road | only 1 address found |
 | burbank-21490271-6735131570 | Bethany Road | no address found |
@@ -1069,6 +1070,7 @@ To fill one, set `block_number` (a multiple of 100) and `source` to `manual` on 
 | burbank-26959288-1901942200 | Fifth Street | only 1 address found |
 | burbank-26959290-1901942200 | Fifth Street | no address found |
 | burbank-26959290-26959291 | Fifth Street | no address found |
+| burbank-26959291-78702966 | East Avenue | no address found |
 | burbank-26959291-78734105 | Fifth Street | no address found |
 | burbank-26959292-122718391 | Fifth Street | only 1 address found |
 | burbank-26959292-1831625521 | Fifth Street | no address found |
@@ -1142,7 +1144,7 @@ To fill one, set `block_number` (a multiple of 100) and `source` to `manual` on 
 | burbank-354942866-1901942266 | Sunset Canyon Drive | only 1 address found |
 | burbank-354944112-354944153 | East Harvard Road | no address found |
 | burbank-354944153-1831625497 | East Harvard Road | no address found |
-| burbank-354955379-354955387 | Magnolia Boulevard Frontage | no address found |
+| burbank-354955379-354955387 | Magnolia Boulevard Frontage | only 1 address found |
 | burbank-35519534-122991894 | Ikea Way | no address found |
 | burbank-35519534-3888150486 | Angeleno Avenue | no address found |
 | burbank-35519541-11739956982 | North 9th Street | no address found |
@@ -1178,7 +1180,7 @@ To fill one, set `block_number` (a multiple of 100) and `source` to `manual` on 
 | burbank-358128817-1721329703 | Amherst Drive | no address found |
 | burbank-358383260-11386928027 | North First Street | no address found |
 | burbank-358383260-1721329693 | North First Street | only 1 address found |
-| burbank-358383260-1831073717 | Magnolia Boulevard | only 1 address found |
+| burbank-358383260-1831073717 | Magnolia Boulevard | no address found |
 | burbank-358383260-3932346816-4049206154 | Magnolia Boulevard | no address found |
 | burbank-358383260-3932346816-6239148110 | Magnolia Boulevard | no address found |
 | burbank-358472402-358472647 | West Alameda Avenue | no address found |
@@ -1190,8 +1192,6 @@ To fill one, set `block_number` (a multiple of 100) and `source` to `manual` on 
 | burbank-358475164-3534490245 | East Alameda Avenue | no address found |
 | burbank-358475164-358475292 | West Alameda Avenue | no address found |
 | burbank-358475289-358475292 | West Alameda Avenue | no address found |
-| burbank-358545935-358545936 | Burbank Boulevard Frontage | no address found |
-| burbank-358545935-358545942 | Burbank Boulevard Frontage | no address found |
 | burbank-359065090-11211148474 | Evergreen Street | only 1 address found |
 | burbank-359212937-359212994 | South Via Montana | no address found |
 | burbank-359212937-359213282 | Country Club Drive | no address found |
