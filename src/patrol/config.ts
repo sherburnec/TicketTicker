@@ -24,6 +24,10 @@ export const PATROL_SAMPLE_DEFAULTS = {
   stopMinutes: { min: 1, max: 10 },
   breakMinutes: 30,
   jitterMeters: 5,
+  /** A street segment within this distance of a hot zone gets that zone's weight added to its base weight of 1. */
+  hotZoneRadiusMeters: 300,
+  /** Pings idling at the depot at the start and end of each shift. */
+  depotPings: 3,
   dropRate: 0.01,
   /** Chance per ping interval that a multi-minute gap begins, and its length range. */
   gapChance: 0.001,

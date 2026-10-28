@@ -10,7 +10,7 @@ import { detectFormat, readHeader, type ColumnMapping, type PatrolFormat } from 
 import { importPatrolInWorker } from './patrol/importer.ts';
 import { renderPatrolSummary } from './ui/patrolSummary.ts';
 import { mountColumnMapper } from './ui/columnMapper.ts';
-import { createPatrolStore, mountPatrolSourcePanel } from './ui/patrolSource.ts';
+import { createPatrolStore, mountPatrolSourcePanel, samplePatrol } from './ui/patrolSource.ts';
 import { mountExportPanel } from './ui/exportPanel.ts';
 import { buildCityReportModel } from './pdf/cityReport.ts';
 import { asOfDate } from './revenue/schedule.ts';
@@ -51,6 +51,7 @@ if (app) {
   const r56 = mountOfficerPanel(officers, streetMap, () => citations && { citations: citations.citations, segments });
   // Patrol data is held apart from citations; loading it never re-imports them (FR-28). Parsing arrives in 7.3; later tasks add the aggregate.
   const patrol = createPatrolStore();
+  const patrolSource = { city: source.city, segments };
   mountPatrolSourcePanel(patrolPanel, patrol, source.city.timeZone, () => {
     patrolFormat.replaceChildren();
     patrolSummary.replaceChildren();
@@ -74,7 +75,7 @@ if (app) {
     };
     if (found.missing.length === 0) done(found.format, found.mapping);
     else mountColumnMapper(patrolFormat, headers, found.format, done);
-  });
+  }, (o) => samplePatrol(patrolSource, o));
   mountSourcePanel(panel, source, async (data) => {
     try {
       citations = await importCitationsInWorker(data.csv, source, (done, total) => {
