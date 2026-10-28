@@ -8,6 +8,8 @@ import { mountR4Panel } from './ui/r4Panel.ts';
 import { mountOfficerPanel } from './ui/officerPanel.ts';
 import { detectFormat, readHeader, type ColumnMapping, type PatrolFormat } from './patrol/formats.ts';
 import { importPatrolInWorker } from './patrol/importer.ts';
+import { mountR8Panel } from './ui/r8Panel.ts';
+import type { PatrolAggregate } from './patrol/aggregate.ts';
 import { renderPatrolSummary } from './ui/patrolSummary.ts';
 import { mountColumnMapper } from './ui/columnMapper.ts';
 import { createPatrolStore, mountPatrolSourcePanel, samplePatrol } from './ui/patrolSource.ts';
@@ -23,6 +25,9 @@ if (app) {
   const patrolPanel = document.createElement('div');
   const patrolFormat = document.createElement('div');
   const patrolSummary = document.createElement('div');
+  const r8Root = document.createElement('div');
+  const patrolMap = document.createElement('div');
+  patrolMap.style.cssText = 'height:480px;margin:1em 0';
   const loaded = document.createElement('p');
   loaded.textContent = 'No citation data loaded.';
   const summary = document.createElement('div');
@@ -33,7 +38,7 @@ if (app) {
   const exportRoot = document.createElement('div');
   const map = document.createElement('div');
   map.style.cssText = 'height:480px;margin:1em 0';
-  app.append(title, panel, patrolPanel, patrolFormat, patrolSummary, loaded, summary, rates, hotspots, map, locations, officers, exportRoot);
+  app.append(title, panel, patrolPanel, patrolFormat, patrolSummary, r8Root, patrolMap, loaded, summary, rates, hotspots, map, locations, officers, exportRoot);
 
   // In-memory only for the session (NFR-1).
   let citations: ImportResult | undefined;
@@ -51,10 +56,15 @@ if (app) {
   const r56 = mountOfficerPanel(officers, streetMap, () => citations && { citations: citations.citations, segments });
   // Patrol data is held apart from citations; loading it never re-imports them (FR-28). Parsing arrives in 7.3; later tasks add the aggregate.
   const patrol = createPatrolStore();
+  // The patrol aggregate lives apart from citations and feeds R8 only (FR-28, RPT-11).
+  let patrolAggregate: PatrolAggregate | undefined;
+  const r8 = mountR8Panel(r8Root, mountStreetMap(patrolMap, source.city, segments), () => patrolAggregate);
   const patrolSource = { city: source.city, segments };
   mountPatrolSourcePanel(patrolPanel, patrol, source.city.timeZone, () => {
     patrolFormat.replaceChildren();
     patrolSummary.replaceChildren();
+    patrolAggregate = undefined;
+    r8.refresh();
     const data = patrol.get();
     if (!data) return;
     const headers = readHeader(data.csv);
@@ -69,6 +79,8 @@ if (app) {
           patrolSummary.textContent = `Importing patrol data: ${Math.round((d / t) * 100)}%`;
         });
         renderPatrolSummary(patrolSummary, result);
+        patrolAggregate = result.aggregate;
+        r8.refresh();
       } catch (e) {
         patrolSummary.textContent = e instanceof Error ? e.message : String(e);
       }

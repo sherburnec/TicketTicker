@@ -20,3 +20,12 @@ export function setCoverageData(map: MapLibreMap, coverage: FeatureCollection): 
   }
   (map.getSource('coverage') as GeoJSONSource).setData(coverage as never);
 }
+
+/** Replaces the R8 patrol heatmap points on a map built from `localStyle`. */
+export function setPatrolData(map: MapLibreMap, patrol: FeatureCollection): void {
+  if (!map.getSource('patrol')) {
+    map.once('load', () => setPatrolData(map, patrol));
+    return;
+  }
+  (map.getSource('patrol') as GeoJSONSource).setData(patrol as never);
+}

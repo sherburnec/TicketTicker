@@ -17,6 +17,7 @@ export function localStyle(segments: FeatureCollection): StyleSpecification {
       hotspots: { type: 'geojson', data: EMPTY as never },
       pins: { type: 'geojson', data: EMPTY as never },
       coverage: { type: 'geojson', data: EMPTY as never },
+      patrol: { type: 'geojson', data: EMPTY as never },
     },
     layers: [
       { id: 'background', type: 'background', paint: { 'background-color': '#f4f1ea' } },
@@ -43,6 +44,18 @@ export function localStyle(segments: FeatureCollection): StyleSpecification {
         source: 'coverage',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': '#1b8a7a', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 16, 7] },
+      },
+      {
+        id: 'patrol-heat',
+        type: 'heatmap',
+        source: 'patrol',
+        paint: {
+          'heatmap-weight': ['get', 'weight'],
+          'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 11, 0.6, 16, 1.6],
+          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 11, 6, 16, 30],
+          'heatmap-opacity': 0.85,
+          'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(255,255,255,0)', 0.2, '#cfe3f5', 0.5, '#5b9bd5', 0.8, '#2c5aa0', 1, '#1b2a6b'],
+        },
       },
       {
         id: 'pins',
