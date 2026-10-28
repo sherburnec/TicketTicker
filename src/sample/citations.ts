@@ -68,10 +68,37 @@ function monthShares(cfg: SampleConfig, rng: Rng): { paid: number; reversed: num
   }
 }
 
+/** Error-injection mode (FR-4b): how many deliberately invalid rows of each type to add. Off unless passed. */
+export interface InjectErrors {
+  perType?: number;
+}
+
+const BAD_DATES = ['2026-13-40', '03/10/2026', 'not-a-date'];
+
+/**
+ * Appends rows the importer must reject or flag (FR-4b), each copied from a valid row so only the injected fault differs:
+ * duplicate IDs and bad dates are rejected; unknown codes and unmatched addresses are flagged. Injected IDs start with E-
+ * (duplicates keep the original's ID). Uses its own random stream, so the valid rows are the same with or without it.
+ */
+function injectErrors(rows: Citation[], rng: Rng, perType: number): Citation[] {
+  const out: Citation[] = [];
+  if (rows.length === 0) return out;
+  const copy = (id: string, change: Partial<Citation>): Citation => ({ ...rng.pick(rows), id, ...change, flags: [] });
+  for (let i = 1; i <= perType; i++) {
+    const original = rng.pick(rows);
+    out.push({ ...original, flags: [] });
+    out.push(copy(`E-DATE-${i}`, { date: rng.pick(BAD_DATES) }));
+    out.push(copy(`E-CODE-${i}`, { code: `ZZZ-${rng.int(1000, 9999)}` }));
+    out.push(copy(`E-ADDR-${i}`, { address: `${rng.int(1, 99)}00 Nowhere Blvd` }));
+  }
+  return out;
+}
+
 /** Builds the citation rows for a sample (FR-4, FR-4d), ordered by date and time. */
-export function generateCitationRows(cfgIn: Partial<SampleConfig>, source: CitationSource): Citation[] {
+export function generateCitationRows(cfgIn: Partial<SampleConfig>, source: CitationSource, inject?: InjectErrors): Citation[] {
   const cfg = sampleConfig(cfgIn);
-  const rng = createRng(cfg.seed ?? Math.floor(Math.random() * 2 ** 32));
+  const seed = cfg.seed ?? Math.floor(Math.random() * 2 ** 32);
+  const rng = createRng(seed);
   const spots = buildSpots(source);
   if (spots.block.length === 0) throw new Error(`city ${source.city.id}: no block addresses to draw citations from`);
   const codes = [...new Set(source.schedule.map((e) => e.code))];
@@ -132,6 +159,7 @@ export function generateCitationRows(cfgIn: Partial<SampleConfig>, source: Citat
     for (const row of dayRows) row.id = `C${pad(++seq, 7)}`;
     rows.push(...dayRows);
   }
+  if (inject) rows.push(...injectErrors(rows, createRng(`${seed}:errors`), inject.perType ?? 5));
   return rows;
 }
 
@@ -148,6 +176,6 @@ export function citationsToCsv(rows: Citation[]): string {
 }
 
 /** Generates a citation sample as CSV text, ready for the same importer as an upload (FR-4a). */
-export function generateCitations(cfg: Partial<SampleConfig>, source: CitationSource): string {
-  return citationsToCsv(generateCitationRows(cfg, source));
+export function generateCitations(cfg: Partial<SampleConfig>, source: CitationSource, inject?: InjectErrors): string {
+  return citationsToCsv(generateCitationRows(cfg, source, inject));
 }
