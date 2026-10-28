@@ -36,6 +36,11 @@ export const DEFAULT_SAMPLE_CONFIG: SampleConfig = {
   officerCount: 12,
 };
 
+/** Revenue-model defaults. The settled-citation threshold is a placeholder until plan OQ2 is answered (AS5, FR-22). */
+export const REVENUE_DEFAULTS = {
+  minSettledCitations: 30,
+};
+
 export function sampleConfig(overrides: Partial<SampleConfig> = {}): SampleConfig {
   return { ...DEFAULT_SAMPLE_CONFIG, ...overrides };
 }
