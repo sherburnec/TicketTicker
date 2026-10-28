@@ -1,1 +1,4 @@
 location_id,location_name,address,latitude,longitude,notes
+BUR-1,Empire Center,1800 W Empire Ave,,,"Target Burbank."
+BUR-2,Empire Center,1301 N Victory Pl,,,"Walmart Empire."
+BUR-3,Burbank Costco,1051 W Burbank Blvd,,,"Burbank Costco."
