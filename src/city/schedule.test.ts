@@ -64,8 +64,10 @@ describe('parseNamedLocations', () => {
     expect(locs[0].lat).toBeUndefined();
   });
 
-  it('reads the empty Burbank file and coordinates', () => {
-    expect(parseNamedLocations(burbankLocations)).toEqual([]);
+  it('reads the Burbank file and coordinates', () => {
+    const burbank = parseNamedLocations(burbankLocations);
+    expect(burbank.map((l) => l.id)).toEqual(['BUR-1', 'BUR-2', 'BUR-3']);
+    expect(burbank[2]).toMatchObject({ name: 'Burbank Costco', addresses: ['1051 W Burbank Blvd'] });
     const [l] = parseNamedLocations('location_id,location_name,address,latitude,longitude,notes\nX,Mall,1 Main St,34.18,-118.3,\n');
     expect(l).toMatchObject({ lat: 34.18, lon: -118.3 });
   });
