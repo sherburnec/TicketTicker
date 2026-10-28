@@ -33,6 +33,11 @@ export function loadCitySource(id: string): CitationSource {
   };
 }
 
+/** Street geometry for the local map, parsed from the city's bundled segments.geojson. */
+export function loadSegments(id: string): { type: 'FeatureCollection'; features: unknown[] } {
+  return JSON.parse(cityFile(segmentFiles, id, 'segments.geojson'));
+}
+
 export function sampleCitations(source: CitationSource, durationMonths: number, seed?: string): LoadedCitations {
   if (!Number.isInteger(durationMonths) || durationMonths < 1) throw new Error('Duration must be a whole number of months, at least 1.');
   const csv = generateCitations({ durationMonths, seed: seed === undefined || seed === '' ? undefined : seed }, source);

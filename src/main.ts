@@ -1,7 +1,8 @@
-import { loadCitySource, mountSourcePanel } from './ui/sourcePanel.ts';
+import { loadCitySource, loadSegments, mountSourcePanel } from './ui/sourcePanel.ts';
 import { importCitationsInWorker, type ImportResult } from './import/citations.ts';
 import { renderImportSummary } from './ui/importSummary.ts';
 import { mountRatesPanel } from './ui/ratesPanel.ts';
+import { mountStreetMap } from './map/streetMap.ts';
 
 const app = document.getElementById('app');
 if (app) {
@@ -12,11 +13,14 @@ if (app) {
   loaded.textContent = 'No citation data loaded.';
   const summary = document.createElement('div');
   const rates = document.createElement('div');
-  app.append(title, panel, loaded, summary, rates);
+  const map = document.createElement('div');
+  map.style.cssText = 'height:480px;margin:1em 0';
+  app.append(title, panel, loaded, summary, rates, map);
 
   // In-memory only for the session (NFR-1).
   let citations: ImportResult | undefined;
   const source = loadCitySource('burbank');
+  mountStreetMap(map, source.city, loadSegments('burbank'));
   const ratesPanel = mountRatesPanel(rates, () => citations && { citations: citations.citations, ctx: { schedule: source.schedule, city: source.city } });
   mountSourcePanel(panel, source, async (data) => {
     try {
