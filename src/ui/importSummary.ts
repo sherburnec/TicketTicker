@@ -1,4 +1,5 @@
 import type { ImportResult, RejectedRow } from '../import/citations.ts';
+import { disclosure, el, heading } from './dom.ts';
 
 /** Rows listed on screen before "and N more"; the downloaded CSV always holds all of them. */
 const LIST_LIMIT = 100;
@@ -38,12 +39,6 @@ function download(filename: string, text: string): void {
   URL.revokeObjectURL(url);
 }
 
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string): HTMLElementTagNameMap[K] {
-  const e = document.createElement(tag);
-  if (text !== undefined) e.textContent = text;
-  return e;
-}
-
 function list(items: string[], total: number): HTMLUListElement {
   const ul = el('ul');
   for (const text of items.slice(0, LIST_LIMIT)) ul.append(el('li', text));
@@ -55,14 +50,20 @@ function list(items: string[], total: number): HTMLUListElement {
 export function renderImportSummary(root: HTMLElement, result: ImportResult): void {
   const { total, imported, rejected, unmatched } = result.counts;
   const n = (v: number) => v.toLocaleString();
-  root.replaceChildren(el('h2', 'Import summary'));
-  root.append(el('p', `Total rows: ${n(total)}. Imported: ${n(imported)}. Rejected: ${n(rejected)}.`));
+  root.replaceChildren(heading('Import summary'));
+  const counts = el('dl', undefined, 'figures');
+  for (const [label, value, kind] of [['Total rows', total, ''], ['Imported', imported, 'ok'], ['Rejected', rejected, rejected > 0 ? 'error' : '']] as const) {
+    const wrap = el('div', undefined, kind ? `figure figure-${kind}` : 'figure');
+    wrap.append(el('dt', label), el('dd', n(value)));
+    counts.append(wrap);
+  }
+  root.append(counts);
 
   if (rejected > 0) {
     const warning = el('section');
     warning.setAttribute('role', 'alert');
     warning.append(el('h3', `Warning: ${n(rejected)} row${rejected === 1 ? ' was' : 's were'} rejected`));
-    warning.append(list(result.rejected.map((r) => `Row ${r.rowNumber}: ${r.reason}`), rejected));
+    warning.append(disclosure('Show rejected rows', list(result.rejected.map((r) => `Row ${r.rowNumber}: ${r.reason}`), rejected)));
     const button = el('button', 'Download rejected rows (CSV)');
     button.type = 'button';
     button.addEventListener('click', () => download('rejected-rows.csv', rejectsToCsv(result.rejected)));
@@ -72,13 +73,11 @@ export function renderImportSummary(root: HTMLElement, result: ImportResult): vo
 
   const flags = flagCounts(result);
   if (flags.length > 0) {
-    root.append(el('h3', 'Flagged rows (imported, but worth checking)'));
-    root.append(list(flags.map(([flag, count]) => `${flag}: ${n(count)}`), flags.length));
+    root.append(disclosure(`Flagged rows: ${flags.length} kind${flags.length === 1 ? '' : 's'} (imported, but worth checking)`, list(flags.map(([flag, count]) => `${flag}: ${n(count)}`), flags.length)));
   }
 
   if (unmatched > 0) {
     const groups = unmatchedByAddress(result);
-    root.append(el('h3', `Unmatched addresses: ${n(unmatched)} row${unmatched === 1 ? '' : 's'}, ${n(groups.length)} distinct`));
-    root.append(list(groups.map(([address, count]) => `${address} (${n(count)})`), groups.length));
+    root.append(disclosure(`Unmatched addresses: ${n(unmatched)} row${unmatched === 1 ? '' : 's'}, ${n(groups.length)} distinct`, list(groups.map(([address, count]) => `${address} (${n(count)})`), groups.length)));
   }
 }

@@ -1,5 +1,6 @@
 import { buildCityPdf, type CityReportModel } from '../pdf/cityReport.ts';
 import { money } from './ratesPanel.ts';
+import { el, emptyState, heading } from './dom.ts';
 
 export const CONFIRMATION_TEXT = 'I confirm this report includes no officer data and that the assumptions shown are correct.';
 
@@ -40,26 +41,23 @@ export function createExportState(model: () => CityReportModel | undefined) {
 
 export function mountExportPanel(root: HTMLElement, model: () => CityReportModel | undefined): { refresh(): void } {
   const state = createExportState(model);
-  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
-    const e = document.createElement(tag);
-    if (text !== undefined) e.textContent = text;
-    return e;
-  };
 
   function render(): void {
     state.reset();
-    root.replaceChildren(el('h2', 'City PDF'));
+    root.replaceChildren(heading('City report (PDF)'));
     const m = model();
     if (!m) {
-      root.append(el('p', 'Load citation data to export the city PDF.'));
+      root.append(emptyState('Load citation data to export the city PDF.'));
       return;
     }
-    const ul = el('ul');
+    const ul = el('ul', undefined, 'preview');
     for (const l of previewLines(m)) ul.append(el('li', l));
+    const preview = el('div', undefined, 'card');
+    preview.append(el('h3', 'What the city will see'), ul);
     const box = el('input');
     box.type = 'checkbox';
-    const label = el('label');
-    label.append(box, ` ${CONFIRMATION_TEXT}`);
+    const label = el('label', undefined, 'confirm');
+    label.append(box, el('span', CONFIRMATION_TEXT));
     const button = el('button', 'Export PDF');
     button.type = 'button';
     button.disabled = true;
@@ -77,7 +75,7 @@ export function mountExportPanel(root: HTMLElement, model: () => CityReportModel
       a.click();
       URL.revokeObjectURL(url);
     });
-    root.append(ul, label, el('br'), button);
+    root.append(preview, label, button);
   }
 
   render();

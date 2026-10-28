@@ -110,12 +110,26 @@ Open Questions:
 1. Volume tests (NFR-6, K7, K15). Done when: 5-year citation (~365k rows) and 2M-row patrol imports complete in a browser with the progress indicator updating and a main-thread heartbeat timer never stalling over 1 s (placeholder until OQ5).
 2. Privacy guards (NFR-1–NFR-4). Done when: a test finds no persistence APIs or external URLs in `src/`, and CI fails if CSVs exist outside `data/<city>/` or test fixtures.
 
+### Phase 9: Web UI review and overhaul
+Runs differently from earlier phases: it is a design pass, not a feature build. Use the `frontend-design` skill (`.claude/skills/frontend-design/SKILL.md`) for every task. No behavior, data or privacy changes; existing tests must keep passing. Constraints: no remote fonts, CDNs or images (NFR-1, NFR-5), no new dependency without approval, no persistence APIs.
+1. UI audit and design direction. Files: `docs/ui-audit.md` (new). Done when: every panel and report (source, import summary, rates, R1–R6, R8, patrol, export, column mapper) is reviewed in the running app (`npm run preview`) at desktop and narrow widths, problems are listed (layout, hierarchy, typography, spacing, color, empty/loading/error states, chart and map legibility, accessibility), and a short design direction (tone, type, palette, density) is written and approved by the author before any restyling.
+2. Design system foundation. Files: `src/ui/theme.css` (new), `index.html`, `src/main.ts`. Done when: CSS tokens (color, type scale, spacing, radius, elevation), base element styles and shared components (card, button, input, table, tag, notice, tab) exist, fonts are system or self-hosted, and no panel uses ad hoc inline styles for values the tokens cover.
+3. App shell and navigation. Files: `src/main.ts`, `index.html`. Done when: layout has a clear header, source/as-of context, report navigation and content area; the first screen explains what to do; sections can be reached without scrolling past unrelated panels.
+4. Data intake panels: source selector, import summary, patrol source and summary, column mapper (`src/ui/sourcePanel.ts`, `importSummary.ts`, `patrolSource.ts`, `patrolSummary.ts`, `columnMapper.ts`). Done when: progress, success, reject/flag/unmatched and error states are visually distinct and readable, and the existing panel tests pass.
+5. Revenue and rates presentation (`src/ui/ratesPanel.ts`, R1 in `src/reports/r1.ts`). Done when: Realized vs Projected, avg/low/high range, and "Computed"/"Manually set" labels are clearly differentiated, the as-of date is prominent, and low-count warnings and notices keep their required wording (FR-22, K3).
+6. Charts, tables and heatmaps (R2, R3, R4, R5, R6, R8: `src/reports/*`, `src/ui/r3Panel.ts`, `r4Panel.ts`, `r8Panel.ts`, `officerPanel.ts`). Done when: the `dataviz` skill palette and legend rules are applied, R8 legend still states unit and scale mode, the R5 proxy label and RPT-3 notices remain, and day×hour cell click still filters the map.
+7. Map styling (`src/map/style.ts`, `hotspots.ts`, `streetMap.ts`). Done when: map matches the new theme, hotspot and named-location pins are legible, and `style.test.ts` still asserts no remote sources.
+8. City PDF export panel and preview (`src/ui/exportPanel.ts`). Done when: the pre-export preview and confirmation checkbox are prominent and the export stays disabled until confirmed (FR-27).
+9. Responsive, accessibility and polish. Done when: usable at 1280px and 900px widths, keyboard navigable with visible focus, color contrast meets WCAG AA in the theme, `prefers-reduced-motion` respected, and empty/loading states exist for every report.
+10. Verification. Done when: `npm run build` and `npm test` pass, before/after screenshots of every report are reviewed with the author, and the manual G1 timed walkthrough (< 5 min) still holds.
+
 ## 6. Risks
 - K1 Incomplete block matching: build `blocks.csv` first, normalize addresses, show unmatched list and match rate.
 - K10 Samsara format differs: support A and B with aliases and column mapper; rework when a real export arrives (OQ10).
 - K5 Real or officer data exposure: `.gitignore` and CI guard, RPT-5 PDF text test, pre-export preview.
 - K7/K15 Browser performance: workers, streaming, aggregate-only patrol storage, Phase 8 volume tests.
 - K3 Projections misread: mandatory labels, computed/manual status, as-of date, low/high range, estimate fines (OQ13).
+- K16 UI overhaul regresses required labels, notices or privacy rules: keep existing tests green, restyle without changing wording of FR-22/FR-24/RPT-3/RPT-5 text, review screenshots with the author (Phase 9).
 
 ## 7. Verification
 | PRD criterion | Check |
@@ -132,4 +146,5 @@ Open Questions:
 | FR-23–FR-27, RPT-1–RPT-7 | Phases 5–6 |
 | FR-28–FR-46, DR-13–DR-15, RPT-8–RPT-11 | Phase 7 |
 | NFR-1–NFR-7 | Tasks 1.1, 1.2, 5.2, 8.1, 8.2 |
+| UI overhaul (no behavior change) | Phase 9 tasks 9.1–9.10; existing tests green; author screenshot review |
 | FR-4a / FR-45 acceptance | `tests/acceptance/*` in CI |

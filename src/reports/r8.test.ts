@@ -114,7 +114,7 @@ describe('R8 independence from citations (RPT-11)', () => {
       const source = readFileSync(file, 'utf8');
       const specs = [...source.matchAll(/from\s+'([^']+)'/g)].map((m) => m[1]);
       for (const spec of specs) {
-        expect(spec, `${file} imports ${spec}`).toMatch(/^(maplibre-gl|\.\.\/map\/|\.\.\/patrol\/aggregate\.ts|\.\.\/reports\/r8\.ts|\.\/r8\.ts)/);
+        expect(spec, `${file} imports ${spec}`).toMatch(/^(maplibre-gl|\.\.\/map\/|\.\.\/patrol\/aggregate\.ts|\.\.\/reports\/r8\.ts|\.\/r8\.ts|\.\/dom\.ts)/);
       }
     }
   });

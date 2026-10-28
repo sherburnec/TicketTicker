@@ -1,4 +1,5 @@
 import { FORMAT_FIELDS, detectAs, type ColumnMapping, type FieldKey, type PatrolFormat } from '../patrol/formats.ts';
+import { el, field, heading, notice } from './dom.ts';
 
 /**
  * Turns the user's column choices into a mapping (FR-35). Each required field needs a column, and one column
@@ -35,15 +36,10 @@ export function mountColumnMapper(
   onConfirm: (format: PatrolFormat, mapping: ColumnMapping) => void,
 ): void {
   let format = initial;
-  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
-    const e = document.createElement(tag);
-    if (text !== undefined) e.textContent = text;
-    return e;
-  };
 
   function render(): void {
-    root.replaceChildren(el('h3', 'Map the patrol file columns'));
-    root.append(el('p', 'The column headers were not recognized. Choose which column holds each field.'));
+    root.replaceChildren(heading('Map the patrol file columns', undefined, 'h3'));
+    root.append(notice('The column headers were not recognized. Choose which column holds each field.', 'estimate'));
 
     const formatSelect = el('select');
     formatSelect.setAttribute('aria-label', 'File format');
@@ -74,12 +70,10 @@ export function mountColumnMapper(
         select.append(o);
       });
       selects.set(spec.key, select);
-      const label = el('label', `${spec.label}${spec.required ? ' *' : ''} `);
-      label.append(select);
-      root.append(label, el('br'));
+      root.append(field(`${spec.label}${spec.required ? ' (required)' : ''}`, select));
     }
 
-    const status = el('p');
+    const status = el('p', undefined, 'form-error');
     status.setAttribute('role', 'status');
     const ok = el('button', 'Use this mapping');
     ok.type = 'button';

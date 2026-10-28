@@ -2,6 +2,7 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { setPatrolData } from '../map/hotspots.ts';
 import type { PatrolAggregate } from '../patrol/aggregate.ts';
 import { buildR8, hasMotion, R8_INTERNAL_NOTICE, R8_NOTICE, type PatrolFilter, type R8View, type ScaleMode } from '../reports/r8.ts';
+import { el, emptyState, field, heading, notice } from './dom.ts';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -31,20 +32,16 @@ export function createR8State(input: () => PatrolAggregate | undefined) {
   };
 }
 
-export function mountR8Panel(root: HTMLElement, map: MapLibreMap, input: () => PatrolAggregate | undefined): { refresh(): void } {
+export function mountR8Panel(root: HTMLElement, map: MapLibreMap, input: () => PatrolAggregate | undefined, mapSlot?: HTMLElement): { refresh(): void } {
   const state = createR8State(input);
-  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
-    const e = document.createElement(tag);
-    if (text !== undefined) e.textContent = text;
-    return e;
-  };
   const n = (v: number) => v.toLocaleString(undefined, { maximumFractionDigits: 1 });
 
   function render(): void {
-    root.replaceChildren(el('h2', 'R8 Patrol heatmap'), el('p', R8_INTERNAL_NOTICE), el('p', R8_NOTICE));
+    root.replaceChildren(heading('Patrol heatmap', 'R8'), notice(R8_INTERNAL_NOTICE), notice(R8_NOTICE));
+    if (mapSlot) root.append(mapSlot);
     const v = state.view();
     if (!v) {
-      root.append(el('p', 'Load patrol data to see the patrol heatmap.'));
+      root.append(emptyState('Load patrol data to see the patrol heatmap.'));
       setPatrolData(map, { type: 'FeatureCollection', features: [] });
       return;
     }
@@ -52,11 +49,7 @@ export function mountR8Panel(root: HTMLElement, map: MapLibreMap, input: () => P
     const f = state.filter();
     setPatrolData(map, view.features);
 
-    const labelled = (text: string, control: HTMLElement) => {
-      const l = el('label', `${text} `);
-      l.append(control);
-      return l;
-    };
+    const labelled = field;
     const date = (key: 'dateFrom' | 'dateTo') => {
       const i = el('input');
       i.type = 'date';
@@ -94,7 +87,9 @@ export function mountR8Panel(root: HTMLElement, map: MapLibreMap, input: () => P
       state.setScale(scale.value as ScaleMode);
       render();
     });
-    root.append(labelled('From', date('dateFrom')), ' ', labelled('To', date('dateTo')), ' ', labelled('Day', day), ' ', labelled('Hour', hour), ' ', labelled('Vehicle', vehicle), ' ', labelled('Colour scale', scale));
+    const controls = el('div', undefined, 'controls');
+    controls.append(labelled('From', date('dateFrom')), labelled('To', date('dateTo')), labelled('Day', day), labelled('Hour', hour), labelled('Vehicle', vehicle), labelled('Colour scale', scale));
+    root.append(controls);
     if (hasMotion(aggregate)) {
       const motion = el('select');
       motion.append(new Option('Any', ''), new Option('Moving', 'm'), new Option('Stopped', 's'));
@@ -103,7 +98,7 @@ export function mountR8Panel(root: HTMLElement, map: MapLibreMap, input: () => P
         state.set({ motion: motion.value === '' ? undefined : (motion.value as 'm' | 's') });
         render();
       });
-      root.append(' ', labelled('Motion', motion));
+      controls.append(labelled('Motion', motion));
     }
     const reset = el('button', 'Clear filters');
     reset.type = 'button';
@@ -111,12 +106,17 @@ export function mountR8Panel(root: HTMLElement, map: MapLibreMap, input: () => P
       state.clear();
       render();
     });
-    root.append(' ', reset);
+    controls.append(reset);
 
-    root.append(el('p', view.legend), el('p', `Total under the filter: ${n(view.total)} ${aggregate.unit}.`));
+    const legend = el('div', undefined, 'legend');
+    const ramp = el('span', undefined, 'legend-ramp');
+    ramp.style.background = 'linear-gradient(90deg, #cfe3f5, #5b9bd5, #2c5aa0, #1b2a6b)';
+    ramp.setAttribute('aria-hidden', 'true');
+    legend.append(ramp, el('span', view.legend));
+    root.append(legend, el('p', `Total under the filter: ${n(view.total)} ${aggregate.unit}.`, 'lead'));
 
-    root.append(el('h3', `Patrol ${aggregate.unit} by day and hour (select a cell to filter the map)`));
-    const table = el('table');
+    root.append(heading(`Patrol ${aggregate.unit} by day and hour (select a cell to filter the map)`, undefined, 'h3'));
+    const table = el('table', undefined, 'heat-table');
     const head = el('tr');
     head.append(el('th', ''));
     for (let h = 0; h < 24; h++) head.append(el('th', String(h)));
@@ -130,7 +130,9 @@ export function mountR8Panel(root: HTMLElement, map: MapLibreMap, input: () => P
         const b = el('button', value === 0 ? '' : n(value));
         b.type = 'button';
         b.setAttribute('aria-label', `${name} ${h}:00, ${n(value)} ${aggregate.unit}`);
-        b.style.background = `rgba(44, 90, 160, ${view.dayHourMax > 0 ? value / view.dayHourMax : 0})`;
+        const ratio = view.dayHourMax > 0 ? value / view.dayHourMax : 0;
+        b.className = ratio > 0.5 ? 'heat-cell heat-high' : 'heat-cell';
+        b.style.setProperty('--heat', String(ratio));
         b.addEventListener('click', () => {
           state.selectCell(d, h);
           render();
@@ -140,7 +142,9 @@ export function mountR8Panel(root: HTMLElement, map: MapLibreMap, input: () => P
       }
       table.append(tr);
     });
-    root.append(table);
+    const scroll = el('div', undefined, 'table-scroll');
+    scroll.append(table);
+    root.append(scroll);
   }
 
   render();

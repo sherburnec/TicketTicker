@@ -3,7 +3,13 @@ import type { Bbox, CitySettings } from '../types.ts';
 
 export type FeatureCollection = { type: 'FeatureCollection'; features: unknown[] };
 
-const EMPTY: FeatureCollection = { type: 'FeatureCollection', features: [] };
+/** Theme-dependent map colors; data layers keep one ramp that reads on both backgrounds. */
+export const MAP_COLORS = {
+  light: { background: '#eef1ef', streets: '#9aa6b0', pin: '#1f5f8b', pinStroke: '#ffffff' },
+  dark: { background: '#0d1318', streets: '#43525f', pin: '#6bb1de', pinStroke: '#0d1318' },
+} as const;
+
+const EMPTY:FeatureCollection = { type: 'FeatureCollection', features: [] };
 
 /**
  * Map style built only from the city's bundled street geometry (RPT-1, NFR-5).
@@ -20,13 +26,13 @@ export function localStyle(segments: FeatureCollection): StyleSpecification {
       patrol: { type: 'geojson', data: EMPTY as never },
     },
     layers: [
-      { id: 'background', type: 'background', paint: { 'background-color': '#f4f1ea' } },
+      { id: 'background', type: 'background', paint: { 'background-color': MAP_COLORS.light.background } },
       {
         id: 'streets',
         type: 'line',
         source: 'streets',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#8a8f98', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.6, 16, 3] },
+        paint: { 'line-color': MAP_COLORS.light.streets, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.6, 16, 3] },
       },
       {
         id: 'hotspots',
@@ -61,7 +67,7 @@ export function localStyle(segments: FeatureCollection): StyleSpecification {
         id: 'pins',
         type: 'circle',
         source: 'pins',
-        paint: { 'circle-radius': 6, 'circle-color': '#1f5fbf', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 },
+        paint: { 'circle-radius': 6, 'circle-color': MAP_COLORS.light.pin, 'circle-stroke-color': MAP_COLORS.light.pinStroke, 'circle-stroke-width': 2 },
       },
     ],
   };

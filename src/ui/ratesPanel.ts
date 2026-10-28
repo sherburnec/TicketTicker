@@ -2,6 +2,7 @@ import { project, type Projection } from '../revenue/projection.ts';
 import type { RateContext, RateOverrides } from '../revenue/rates.ts';
 import { asOfDate } from '../revenue/schedule.ts';
 import type { Citation } from '../types.ts';
+import { el, emptyState, field, heading, notice } from './dom.ts';
 
 export interface RatesInput {
   citations: Citation[];
@@ -74,12 +75,6 @@ export function createRatesState(input: () => RatesInput | undefined) {
   };
 }
 
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string): HTMLElementTagNameMap[K] {
-  const e = document.createElement(tag);
-  if (text !== undefined) e.textContent = text;
-  return e;
-}
-
 /** Rates and projections with computed and applied values, override inputs and an as-of date. Call `refresh` after new data loads. */
 export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | undefined, onChange?: () => void): { refresh(): void; settings(): { asOf?: string; overrides: RateOverrides } } {
   const state = createRatesState(input);
@@ -88,11 +83,11 @@ export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | und
     root.replaceChildren();
     const v = state.view();
     if (!v) {
-      root.append(el('p', 'Load citation data to see rates and projections.'));
+      root.append(heading('Revenue and rates'), emptyState('Load citation data to see rates and projections.'));
       return;
     }
     const { projection: p } = v;
-    root.append(el('h2', 'Rates and projections'));
+    root.append(heading('Revenue and rates'));
 
     const asOf = el('input');
     asOf.type = 'date';
@@ -102,9 +97,23 @@ export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | und
       render();
       onChange?.();
     });
-    const asOfLabel = el('label', 'As-of date ');
-    asOfLabel.append(asOf);
-    root.append(asOfLabel);
+    root.append(field('As-of date', asOf));
+
+    const range =
+      p.projected.low !== null && p.projected.high !== null
+        ? `Range ${money(p.projected.low)} to ${money(p.projected.high)}`
+        : (p.projected.rangeNotice ?? '');
+    const figures = el('dl', undefined, 'figures');
+    const figure = (label: string, value: string, note: string, kind: string) => {
+      const wrap = el('div', undefined, `figure figure-${kind}`);
+      wrap.append(el('dt', label), el('dd', value));
+      if (note) wrap.append(el('dd', note, 'figure-note'));
+      figures.append(wrap);
+    };
+    figure('Realized', money(p.realized.amount), 'Collected so far', 'fact');
+    figure('Projected (average)', money(p.projected.avg), range, 'estimate');
+    figure('Pending, not in projections', money(p.pending.amount), `${p.pending.count.toLocaleString()} citations`, 'neutral');
+    root.append(figures);
 
     const table = el('table');
     const head = el('tr');
@@ -112,19 +121,22 @@ export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | und
     table.append(head);
     for (const r of v.rows) {
       const tr = el('tr');
-      for (const text of [r.name, r.computed, r.applied, r.status]) tr.append(el('td', text));
+      for (const text of [r.name, r.computed, r.applied]) tr.append(el('td', text));
+      const status = el('td');
+      status.append(el('span', r.status, r.status === 'Computed' ? 'tag' : 'tag tag-estimate'));
+      tr.append(status);
       const cell = el('td');
       const key = r.override;
       if (key) {
-        const field = el('input');
-        field.type = 'number';
-        field.min = '0';
-        field.max = '100';
-        field.step = '0.1';
-        field.setAttribute('aria-label', `${r.name} override`);
-        field.addEventListener('change', () => {
-          if (field.value.trim() === '') state.clearOverride(key);
-          else if (!state.setOverride(key, Number(field.value) / 100)) return;
+        const input = el('input');
+        input.type = 'number';
+        input.min = '0';
+        input.max = '100';
+        input.step = '0.1';
+        input.setAttribute('aria-label', `${r.name} override`);
+        input.addEventListener('change', () => {
+          if (input.value.trim() === '') state.clearOverride(key);
+          else if (!state.setOverride(key, Number(input.value) / 100)) return;
           render();
           onChange?.();
         });
@@ -136,26 +148,15 @@ export function mountRatesPanel(root: HTMLElement, input: () => RatesInput | und
           render();
           onChange?.();
         });
-        cell.append(field, reset);
+        cell.append(input, ' ', reset);
       }
       tr.append(cell);
       table.append(tr);
     }
     root.append(table);
 
-    const lines = [
-      `Realized: ${money(p.realized.amount)}`,
-      `Projected (average): ${money(p.projected.avg)}`,
-      p.projected.low !== null && p.projected.high !== null
-        ? `Projected range: ${money(p.projected.low)} to ${money(p.projected.high)}`
-        : (p.projected.rangeNotice ?? ''),
-      `Pending, not included in projections: ${p.pending.count.toLocaleString()} citations, ${money(p.pending.amount)} at stake`,
-    ];
-    const ul = el('ul');
-    for (const l of lines.filter(Boolean)) ul.append(el('li', l));
-    root.append(ul);
     if (p.lowCountWarning) {
-      root.append(el('p', `Warning: rates are based on ${p.rates.counts.settled} settled citations, fewer than ${p.threshold}.`));
+      root.append(notice(`Warning: rates are based on ${p.rates.counts.settled} settled citations, fewer than ${p.threshold}.`, 'estimate'));
     }
   }
 

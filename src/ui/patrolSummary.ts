@@ -1,15 +1,10 @@
 import type { PatrolImportResult } from '../patrol/importer.ts';
 import { patrolRejectsToCsv } from '../patrol/importer.ts';
 import type { PatrolSummary } from '../patrol/summary.ts';
+import { el, heading } from './dom.ts';
 
 const LIST_LIMIT = 100;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string): HTMLElementTagNameMap[K] {
-  const e = document.createElement(tag);
-  if (text !== undefined) e.textContent = text;
-  return e;
-}
 
 const n = (v: number) => v.toLocaleString();
 
@@ -41,8 +36,8 @@ export function emptyCellLines(s: PatrolSummary): string[] {
 /** Summary, empty-cell list and the rejected rows with a CSV download (FR-31, FR-34). Data is set as text, never HTML. */
 export function renderPatrolSummary(root: HTMLElement, result: PatrolImportResult): void {
   const { summary, rejected } = result;
-  root.replaceChildren(el('h2', 'Patrol import summary'));
-  const ul = el('ul');
+  root.replaceChildren(heading('Import summary'));
+  const ul = el('ul', undefined, 'plain');
   for (const l of patrolSummaryLines(summary)) ul.append(el('li', l));
   root.append(ul);
 

@@ -5,6 +5,7 @@ import { buildCoverage, R5_PROXY_LABEL, type Coverage } from '../reports/r5.ts';
 import { buildOfficerActivity, type OfficerRow } from '../reports/r6.ts';
 import { hotspotFeatures } from '../reports/r3.ts';
 import type { Citation } from '../types.ts';
+import { el, emptyState, field, heading, notice } from './dom.ts';
 
 export interface OfficerInput {
   citations: Citation[];
@@ -37,11 +38,6 @@ export function createOfficerState(input: () => OfficerInput | undefined) {
 
 export function mountOfficerPanel(root: HTMLElement, map: MapLibreMap, input: () => OfficerInput | undefined): { refresh(): void } {
   const state = createOfficerState(input);
-  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
-    const e = document.createElement(tag);
-    if (text !== undefined) e.textContent = text;
-    return e;
-  };
   const officerSelect = el('select');
   const hourSelect = el('select');
   hourSelect.append(new Option('Any', ''), ...Array.from({ length: 24 }, (_, h) => new Option(`${String(h).padStart(2, '0')}:00`, String(h))));
@@ -53,21 +49,18 @@ export function mountOfficerPanel(root: HTMLElement, map: MapLibreMap, input: ()
     state.setHour(hourSelect.value === '' ? undefined : Number(hourSelect.value));
     render();
   });
-  const labelled = (text: string, control: HTMLElement) => {
-    const l = el('label', `${text} `);
-    l.append(control);
-    return l;
-  };
 
   const body = el('div');
-  root.append(el('h2', 'R5 Coverage footprint and R6 Officer activity'), el('p', INTERNAL_NOTICE), el('p', OFFICER_NOTICE), el('p', R5_PROXY_LABEL));
-  root.append(labelled('Officer', officerSelect), ' ', labelled('Hour', hourSelect), body);
+  root.append(heading('Officer activity', 'R5, R6'), notice(INTERNAL_NOTICE), notice(OFFICER_NOTICE), notice(R5_PROXY_LABEL));
+  const controls = el('div', undefined, 'controls');
+  controls.append(field('Officer', officerSelect), field('Hour', hourSelect));
+  root.append(controls, body);
 
   function render(): void {
     body.replaceChildren();
     const v = state.view();
     if (!v) {
-      body.append(el('p', 'Load citation data to see officer reports.'));
+      body.append(emptyState('Load citation data to see officer activity.'));
       setCoverageData(map, { type: 'FeatureCollection', features: [] });
       return;
     }
@@ -85,8 +78,8 @@ export function mountOfficerPanel(root: HTMLElement, map: MapLibreMap, input: ()
       for (const c of [r.officer, r.total, r.byResult.Paid, r.byResult.Unpaid, r.byResult.Pending, r.byResult.Reversed]) tr.append(el('td', String(c)));
       table.append(tr);
     }
-    body.append(el('h3', 'R6 Citations by officer'), table);
-    if (officerSelect.value !== '') body.append(el('p', `R5: ${v.coverage.footprint.size} blocks shown in teal on the map for officer ${officerSelect.value}.`));
+    body.append(heading('Citations by officer', 'R6', 'h3'), table);
+    if (officerSelect.value !== '') body.append(el('p', `R5: ${v.coverage.footprint.size} blocks shown in teal on the map for officer ${officerSelect.value}. See the map under Busiest blocks.`, 'muted'));
   }
   render();
   return { refresh: render };

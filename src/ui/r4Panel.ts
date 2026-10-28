@@ -1,5 +1,6 @@
 import { buildLocationHistory } from '../reports/r4.ts';
 import type { Citation, NamedLocation } from '../types.ts';
+import { el, emptyState, field, heading, notice } from './dom.ts';
 
 export interface R4Input {
   citations: Citation[];
@@ -10,11 +11,6 @@ export const R4_NOTICE = 'Citations reflect enforcement activity, not violation 
 const HISTORY_ROWS = 50;
 
 export function mountR4Panel(root: HTMLElement, input: () => R4Input | undefined): { refresh(): void } {
-  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) => {
-    const e = document.createElement(tag);
-    if (text !== undefined) e.textContent = text;
-    return e;
-  };
   const table = (head: string[], rows: string[][]) => {
     const t = el('table');
     const h = el('tr');
@@ -30,7 +26,7 @@ export function mountR4Panel(root: HTMLElement, input: () => R4Input | undefined
 
   const picker = el('select');
   const detail = el('div');
-  root.append(el('h2', 'R4 Named locations'), el('p', R4_NOTICE), picker, detail);
+  root.append(heading('Location history', 'R4'), notice(R4_NOTICE), field('Location', picker), detail);
 
   function showDetail(): void {
     detail.replaceChildren();
@@ -38,11 +34,11 @@ export function mountR4Panel(root: HTMLElement, input: () => R4Input | undefined
     const loc = i?.namedLocations.find((l) => l.id === picker.value);
     if (!i || !loc) return;
     const h = buildLocationHistory(loc, i.citations);
-    detail.append(el('p', `${h.name}: ${h.total.toLocaleString()} citations`));
+    detail.append(el('p', `${h.name}: ${h.total.toLocaleString()} citations`, 'lead'));
     if (h.total === 0) return;
-    detail.append(el('h3', 'Monthly trend'), table(['Month', 'Citations'], h.trend.map((t) => [t.month, String(t.count)])));
+    detail.append(heading('Monthly trend', undefined, 'h3'), table(['Month', 'Citations'], h.trend.map((t) => [t.month, String(t.count)])));
     detail.append(
-      el('h3', h.total > HISTORY_ROWS ? `History (latest ${HISTORY_ROWS})` : 'History'),
+      heading(h.total > HISTORY_ROWS ? `History (latest ${HISTORY_ROWS})` : 'History', undefined, 'h3'),
       table(
         ['Date', 'Time', 'Code', 'Result', 'Address'],
         h.history.slice(0, HISTORY_ROWS).map((c) => [c.date, c.time, c.code, c.result, c.address]),
@@ -55,7 +51,7 @@ export function mountR4Panel(root: HTMLElement, input: () => R4Input | undefined
     const keep = picker.value;
     picker.replaceChildren();
     if (!i) {
-      detail.replaceChildren(el('p', 'Load citation data to see named locations.'));
+      detail.replaceChildren(emptyState('Load citation data to see location history.'));
       return;
     }
     for (const l of i.namedLocations) picker.append(new Option(`${l.name} (${l.addresses[0] ?? l.id})`, l.id));
