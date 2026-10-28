@@ -134,3 +134,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# NFR-2: no real citation, officer or Samsara data in the repo. CSVs are allowed only in city data folders and test fixtures.
+*.csv
+!data/*/*.csv
+!tests/fixtures/**/*.csv
+*samsara*
+!tests/fixtures/**/*samsara*
