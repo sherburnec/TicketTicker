@@ -51,7 +51,7 @@ if (app) {
   const r56 = mountOfficerPanel(officers, streetMap, () => citations && { citations: citations.citations, segments });
   // Patrol data is held apart from citations; loading it never re-imports them (FR-28). Parsing arrives in 7.3; later tasks add the aggregate.
   const patrol = createPatrolStore();
-  mountPatrolSourcePanel(patrolPanel, patrol, () => {
+  mountPatrolSourcePanel(patrolPanel, patrol, source.city.timeZone, () => {
     patrolFormat.replaceChildren();
     patrolSummary.replaceChildren();
     const data = patrol.get();
@@ -61,7 +61,7 @@ if (app) {
     const done = async (format: PatrolFormat, columns: ColumnMapping) => {
       patrolFormat.textContent = `Detected Format ${format}${found.missing.length ? ' (columns mapped by you)' : ''}.`;
       try {
-        const result = await importPatrolInWorker({ csv: data.csv, format, columns }, (d, t) => {
+        const result = await importPatrolInWorker({ csv: data.csv, format, columns, timeZone: data.timeZone ?? source.city.timeZone }, (d, t) => {
           patrolSummary.textContent = `Importing patrol data: ${Math.round((d / t) * 100)}%`;
         });
         renderPatrolSummary(patrolSummary, format, result);

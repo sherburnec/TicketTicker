@@ -214,6 +214,8 @@ export interface PatrolRequest {
   csv: string;
   format: PatrolFormat;
   columns: ColumnMapping;
+  /** Zone for times without a UTC marker or offset (FR-33). */
+  timeZone: string;
 }
 
 export type PatrolMessage =

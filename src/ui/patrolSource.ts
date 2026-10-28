@@ -1,7 +1,11 @@
+import { zoneClock } from '../patrol/time.ts';
+
 /** Patrol CSV text held in memory for the session, with a description of where it came from (FR-28). */
 export interface LoadedPatrol {
   csv: string;
   label: string;
+  /** Zone for times with no UTC marker or offset; the city zone unless the user changes it (FR-33). */
+  timeZone?: string;
 }
 
 /** Held apart from the citation data: loading, replacing or clearing it never touches citations (FR-28). */
@@ -35,6 +39,7 @@ export async function uploadedPatrol(file: File): Promise<LoadedPatrol> {
 export function mountPatrolSourcePanel(
   root: HTMLElement,
   store: ReturnType<typeof createPatrolStore>,
+  defaultZone: string,
   onChange: () => void,
   sample?: () => LoadedPatrol,
 ): void {
@@ -47,6 +52,7 @@ export function mountPatrolSourcePanel(
       <div data-for="upload" hidden>
         <input type="file" name="patrol-file" accept=".csv,text/csv" />
       </div>
+      <label>Time zone for times without an offset <input type="text" name="patrol-zone" value="${defaultZone}" /></label>
       <button type="button" name="load-patrol">Apply</button>
       <p role="status" data-status></p>
     </fieldset>`;
@@ -61,17 +67,23 @@ export function mountPatrolSourcePanel(
   $('button[name="load-patrol"]').addEventListener('click', async () => {
     status.textContent = '';
     try {
+      const timeZone = $<HTMLInputElement>('input[name="patrol-zone"]').value.trim() || defaultZone;
+      try {
+        zoneClock(timeZone);
+      } catch {
+        throw new Error(`Unknown time zone: ${timeZone}`);
+      }
       if (mode() === 'none') {
         store.clear();
         status.textContent = 'No patrol data loaded.';
       } else if (mode() === 'sample' && sample) {
-        const data = sample();
+        const data = { ...sample(), timeZone };
         store.set(data);
         status.textContent = data.label;
       } else {
         const file = $<HTMLInputElement>('input[name="patrol-file"]').files?.[0];
         if (!file) throw new Error('Choose a CSV file first.');
-        const data = await uploadedPatrol(file);
+        const data = { ...(await uploadedPatrol(file)), timeZone };
         store.set(data);
         status.textContent = data.label;
       }
