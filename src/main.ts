@@ -61,10 +61,13 @@ if (app) {
     const done = async (format: PatrolFormat, columns: ColumnMapping) => {
       patrolFormat.textContent = `Detected Format ${format}${found.missing.length ? ' (columns mapped by you)' : ''}.`;
       try {
-        const result = await importPatrolInWorker({ csv: data.csv, format, columns, timeZone: data.timeZone ?? source.city.timeZone }, (d, t) => {
+        const result = await importPatrolInWorker({
+          csv: data.csv, format, columns, timeZone: data.timeZone ?? source.city.timeZone,
+          city: { settings: source.city, blocks: source.blocks, namedLocations: source.namedLocations, segments: format === 'B' ? segments : undefined },
+        }, (d, t) => {
           patrolSummary.textContent = `Importing patrol data: ${Math.round((d / t) * 100)}%`;
         });
-        renderPatrolSummary(patrolSummary, format, result);
+        renderPatrolSummary(patrolSummary, result);
       } catch (e) {
         patrolSummary.textContent = e instanceof Error ? e.message : String(e);
       }

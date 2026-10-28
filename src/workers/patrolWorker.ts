@@ -1,14 +1,10 @@
-import { parseTimestamp, zoneClock } from '../patrol/time.ts';
-import { readPatrol, type PatrolMessage, type PatrolPoint, type PatrolRequest } from '../patrol/importer.ts';
+import { importPatrol, type PatrolMessage, type PatrolRequest } from '../patrol/importer.ts';
 
 const post = (msg: PatrolMessage) => self.postMessage(msg);
 
 self.onmessage = (e: MessageEvent<PatrolRequest>) => {
   try {
-    const clock = zoneClock(e.data.timeZone);
-    const sink = (_p: PatrolPoint) => {};
-    const result = readPatrol(e.data.csv, e.data.format, e.data.columns, { parseTime: (raw) => parseTimestamp(raw, clock) }, sink, (done, total) => post({ type: 'progress', done, total }));
-    post({ type: 'done', result });
+    post({ type: 'done', result: importPatrol(e.data, (done, total) => post({ type: 'progress', done, total })) });
   } catch (err) {
     post({ type: 'error', message: err instanceof Error ? err.message : String(err) });
   }

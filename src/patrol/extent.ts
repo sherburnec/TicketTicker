@@ -7,6 +7,13 @@ export type ExcludedCounts = Record<ExcludeReason, number>;
 
 export const emptyExcluded = (): ExcludedCounts => ({ 'Outside city extent': 0, 'Inside exclusion zone': 0, 'Inside depot zone': 0 });
 
+/** South-west corner of the extent, where the aggregation grid starts. */
+export function extentOrigin(city: Pick<CitySettings, 'extent'>): { lat: number; lon: number } {
+  if ('bbox' in city.extent) return { lon: city.extent.bbox[0], lat: city.extent.bbox[1] };
+  const pts = city.extent.polygon;
+  return { lon: Math.min(...pts.map((p) => p[0])), lat: Math.min(...pts.map((p) => p[1])) };
+}
+
 const EARTH_M = 6371000;
 
 /** Distance in metres between two points; accurate to well under a metre at city scale. */

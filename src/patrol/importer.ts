@@ -1,3 +1,10 @@
+import { buildMatchIndex, matchAddress, type BlockInfo } from '../geo/matcher.ts';
+import type { CitySettings, NamedLocation } from '../types.ts';
+import { createAggregator, segmentCentroids, type PatrolAggregate, type UnmatchedStop } from './aggregate.ts';
+import { PATROL_DEFAULTS } from './config.ts';
+import { createExcluder, emptyExcluded, excludingSink, extentOrigin, type ExcludedCounts } from './extent.ts';
+import { summarize, type PatrolSummary } from './summary.ts';
+import { parseTimestamp, zoneClock } from './time.ts';
 import { FORMAT_FIELDS, type ColumnMapping, type FieldKey, type PatrolFormat } from './formats.ts';
 
 export interface PatrolRejected {
@@ -210,24 +217,65 @@ export function patrolRejectsToCsv(format: PatrolFormat, rejected: PatrolRejecte
   return [head, ...rejected.map((r) => line([r.rowNumber, r.reason, ...r.raw]))].join('\n') + '\n';
 }
 
+/** What the importer needs from the city: settings for extent, zones and zone, plus blocks and segments to place Format B addresses. */
+export interface PatrolCity {
+  settings: CitySettings;
+  blocks: BlockInfo[];
+  namedLocations: NamedLocation[];
+  /** Street geometry, needed only to place Format B address stops. */
+  segments?: { features: unknown[] };
+}
+
 export interface PatrolRequest {
   csv: string;
   format: PatrolFormat;
   columns: ColumnMapping;
   /** Zone for times without a UTC marker or offset (FR-33). */
   timeZone: string;
+  city: PatrolCity;
+}
+
+export interface PatrolImportResult {
+  aggregate: PatrolAggregate;
+  summary: PatrolSummary;
+  rejected: PatrolRejected[];
+  excluded: ExcludedCounts;
+  unmatched: UnmatchedStop[];
+}
+
+/**
+ * The whole patrol import: validate, exclude points outside the extent or in zones, and aggregate (FR-30 to FR-38).
+ * Only the aggregate survives; raw points are never kept, and driver columns are never read (FR-38, FR-39).
+ */
+export function importPatrol(req: PatrolRequest, onProgress?: (done: number, total: number) => void): PatrolImportResult {
+  const parseClock = zoneClock(req.timeZone);
+  const cityClock = zoneClock(req.city.settings.timeZone);
+  const { settings } = req.city;
+  const placeAddress = (() => {
+    if (req.format !== 'B' || !req.city.segments) return undefined;
+    const index = buildMatchIndex(req.city.blocks, req.city.namedLocations);
+    const centroids = segmentCentroids(req.city.segments);
+    return (address: string) => {
+      const id = matchAddress(address, index).blockId;
+      return id ? centroids.get(id) : undefined;
+    };
+  })();
+  const aggregator = createAggregator({ format: req.format, clock: cityClock, origin: extentOrigin(settings), placeAddress });
+  const excluded = emptyExcluded();
+  const sink = excludingSink(createExcluder(settings, PATROL_DEFAULTS.depotRadiusMeters), excluded, (p) => aggregator.add(p));
+  const { rejected, counts } = readPatrol(req.csv, req.format, req.columns, { parseTime: (raw) => parseTimestamp(raw, parseClock) }, sink, onProgress);
+  const { aggregate, medianPingSeconds, unmatched } = aggregator.finish();
+  const unmatchedStops = unmatched.reduce((n, u) => n + u.count, 0);
+  return { aggregate, summary: summarize(aggregate, counts, excluded, medianPingSeconds, unmatchedStops, req.timeZone), rejected, excluded, unmatched };
 }
 
 export type PatrolMessage =
   | { type: 'progress'; done: number; total: number }
-  | { type: 'done'; result: { rejected: PatrolRejected[]; counts: PatrolCounts } }
+  | { type: 'done'; result: PatrolImportResult }
   | { type: 'error'; message: string };
 
 /** Runs the import in a Web Worker so a large file does not freeze the page (FR-30, NFR-6). */
-export function importPatrolInWorker(
-  request: PatrolRequest,
-  onProgress?: (done: number, total: number) => void,
-): Promise<{ rejected: PatrolRejected[]; counts: PatrolCounts }> {
+export function importPatrolInWorker(request: PatrolRequest, onProgress?: (done: number, total: number) => void): Promise<PatrolImportResult> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('../workers/patrolWorker.ts', import.meta.url), { type: 'module' });
     worker.onmessage = (e: MessageEvent<PatrolMessage>) => {
