@@ -1,4 +1,5 @@
-import { loadCitySource, mountSourcePanel, type LoadedCitations } from './ui/sourcePanel.ts';
+import { loadCitySource, mountSourcePanel } from './ui/sourcePanel.ts';
+import { importCitationsInWorker, type ImportResult } from './import/citations.ts';
 
 const app = document.getElementById('app');
 if (app) {
@@ -9,11 +10,18 @@ if (app) {
   loaded.textContent = 'No citation data loaded.';
   app.append(title, panel, loaded);
 
-  // In-memory only for the session (NFR-1); the importer (task 3.2) consumes this.
-  let citations: LoadedCitations | undefined;
-  mountSourcePanel(panel, loadCitySource('burbank'), (data) => {
-    citations = data;
-    const rows = Math.max(0, citations.csv.trimEnd().split(/\r?\n/).length - 1);
-    loaded.textContent = `${citations.label}: ${rows.toLocaleString()} lines loaded.`;
+  // In-memory only for the session (NFR-1).
+  let citations: ImportResult | undefined;
+  const source = loadCitySource('burbank');
+  mountSourcePanel(panel, source, async (data) => {
+    try {
+      citations = await importCitationsInWorker(data.csv, source, (done, total) => {
+        loaded.textContent = `Importing ${done.toLocaleString()} of ${total.toLocaleString()} rows…`;
+      });
+      const { imported, rejected, unmatched } = citations.counts;
+      loaded.textContent = `${data.label}: ${imported.toLocaleString()} imported, ${rejected.toLocaleString()} rejected, ${unmatched.toLocaleString()} unmatched.`;
+    } catch (e) {
+      loaded.textContent = e instanceof Error ? e.message : String(e);
+    }
   });
 }
