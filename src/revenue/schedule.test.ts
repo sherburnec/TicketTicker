@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadCity } from '../city/loadCity.ts';
 import type { FineEntry } from '../types.ts';
-import { daysBetween, escalationStatus, paymentWindow, resolveCitationFine } from './schedule.ts';
+import { asOfDate, daysBetween, escalationStatus, paymentWindow, resolveCitationFine } from './schedule.ts';
 
 const city = { paymentWindowDays: 21 };
 const schedule: FineEntry[] = [
@@ -15,6 +15,20 @@ describe('daysBetween', () => {
     expect(daysBetween('2026-01-31', '2026-02-01')).toBe(1);
     expect(daysBetween('2025-12-31', '2026-01-01')).toBe(1);
     expect(daysBetween('2026-03-01', '2026-02-01')).toBe(-28);
+  });
+});
+
+describe('asOfDate', () => {
+  const cites = [{ date: '2026-08-01' }, { date: '2026-08-20' }, { date: '2026-08-05' }];
+  it('defaults to the latest citation date', () => {
+    expect(asOfDate(cites)).toBe('2026-08-20');
+    expect(asOfDate([])).toBeUndefined();
+  });
+  it('is replaced by an override, which changes escalation results', () => {
+    expect(asOfDate(cites, '2026-09-30')).toBe('2026-09-30');
+    const at = (asOf: string) => resolveCitationFine(schedule, city, 'BMC-1', '2026-08-01', asOf)?.status;
+    expect(at(asOfDate(cites)!)).toBe('in-window');
+    expect(at(asOfDate(cites, '2026-09-30')!)).toBe('escalated');
   });
 });
 

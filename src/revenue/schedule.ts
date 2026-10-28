@@ -14,6 +14,14 @@ export function daysBetween(from: string, to: string): number {
   return dayNumber(to) - dayNumber(from);
 }
 
+/** The report as-of date: the user's override, else the latest citation date; undefined with no data (FR-16). */
+export function asOfDate(citations: { date: string }[], override?: string): string | undefined {
+  if (override) return override;
+  let latest: string | undefined;
+  for (const c of citations) if (latest === undefined || c.date > latest) latest = c.date;
+  return latest;
+}
+
 /** Payment window in days: the entry's override, else the city value (FR-14b). */
 export function paymentWindow(entry: FineEntry, city: Pick<CitySettings, 'paymentWindowDays'>): number {
   return entry.escalationDays ?? city.paymentWindowDays;
