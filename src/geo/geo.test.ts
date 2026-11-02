@@ -98,3 +98,39 @@ describe('matchAddress', () => {
     expect(matchAddress('1850 W Olive Ave', index)).toEqual({ blockId: 'olive-1800', namedLocationId: 'OLV' });
   });
 });
+
+describe('Malibu address forms', () => {
+  it('treats Pacific Coast Hwy, Highway and PCH alike', () => {
+    expect(key('23250 Pacific Coast Hwy')).toBe('23250 pacific coast hwy');
+    expect(key('23250 Pacific Coast Highway')).toBe(key('23250 Pacific Coast Hwy'));
+    expect(key('23250 PCH')).toBe(key('23250 Pacific Coast Hwy'));
+    expect(key('23250 P.C.H.')).toBe(key('23250 Pacific Coast Hwy'));
+    expect(streetKey('PCH')).toBe(streetKey('Pacific Coast Highway'));
+  });
+
+  it('treats Malibu Canyon Rd and Road alike', () => {
+    expect(key('3900 Malibu Canyon Rd')).toBe(key('3900 Malibu Canyon Road'));
+  });
+
+  it('reads five-digit house numbers', () => {
+    expect(normalizeAddress('23250 Pacific Coast Hwy')).toMatchObject({ number: 23250, name: 'pacific coast', type: 'hwy' });
+  });
+
+  it('drops the trailing city, state and ZIP', () => {
+    expect(key('23250 Pacific Coast Hwy, Malibu, CA 90265')).toBe('23250 pacific coast hwy');
+    expect(key('23250 Pacific Coast Hwy Malibu CA')).toBe('23250 pacific coast hwy');
+    expect(key('3900 Malibu Canyon Rd Malibu CA 90265')).toBe('3900 malibu canyon rd');
+    expect(key('23250 Pacific Coast Hwy Ste 100')).toBe('23250 pacific coast hwy');
+  });
+
+  it('matches a five-digit address to its hundred block on a named street shared by many segments', () => {
+    const blocks: BlockInfo[] = [
+      { id: 'pch-23200', street: 'Pacific Coast Highway', blockNumber: 23200, lowAddress: 23201, highAddress: 23280 },
+      { id: 'pch-23300', street: 'Pacific Coast Highway', blockNumber: 23300, lowAddress: 23301, highAddress: 23380 },
+    ];
+    const index = buildMatchIndex(blocks, [{ id: 'MAL-1', name: 'Pier', addresses: ['23000 PCH'] }]);
+    expect(matchAddress('23250 PCH, Malibu CA 90265', index).blockId).toBe('pch-23200');
+    expect(matchAddress('23350 Pacific Coast Hwy', index).blockId).toBe('pch-23300');
+    expect(matchAddress('23000 Pacific Coast Highway', index).namedLocationId).toBe('MAL-1');
+  });
+});

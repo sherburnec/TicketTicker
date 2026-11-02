@@ -59,3 +59,13 @@ Source: OpenStreetMap via the Overpass API, `way[highway]` with a name, inside t
 ## Notes
 - Pacific Coast Highway is a Caltrans route (State Route 1). Whether the city enforces on it is open (OQ17). Until answered, PCH is in scope in the segments and the sample.
 - Fine schedule and named locations are written in task 10.9; their status (real or estimate) will be recorded here.
+
+## Applied in task 10.8 (author approved the proposals above on 2026-11-02)
+`city.json` (committed with 10.9) uses the proposed values: extent bbox `[-118.95, 33.99, -118.55, 34.09]`, `America/Los_Angeles`, `payment_window_days` 21, depot 34.0378, -118.6844 (near City Hall), no exclusion zones. All of these are `[Proposed]` and answer OQ16 only provisionally.
+
+### Blocks (`node scripts/build-blocks.ts malibu`)
+- 6,275 CAMS points read; 3,136 lie within 40 m of a same-named street segment, 1,852 are 40 to 100 m away and 1,038 are farther or on streets with no segment. Many Malibu parcels sit well back from Pacific Coast Highway, so a wider match distance would capture more (not applied; Burbank's 40 m is unchanged).
+- **Blocks numbered: 164 of 1,378 (12%)**, against Burbank's 1,182 of 2,582 (46%). The list of blocks needing hand entry is `blocks-report.md`.
+- Why it is low: a block is numbered only when at least two addresses fall in one hundred. OSM segments here are long (Pacific Coast Highway has 85 segments over about 20 miles) and cover many hundreds, and canyon roads have few addresses. This is the K17 risk (a long coastal extent). Citations on unnumbered blocks will show as unmatched.
+- **[Proposed]** follow-up, not part of Phase 10: split long segments into block-length pieces, or match by address range instead of hundred. Needs the author's decision.
+- Street names missing from OSM (CAMS streets with no segment), most frequent: Las Olas Way (31 points), Seastar Dr (26), Via Escondido (21), Filaree Heights Ave (19), Broadbeach Rd (18).

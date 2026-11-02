@@ -27,7 +27,10 @@ export interface Address extends Street {
   number: number | null;
 }
 
-const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').replace(/#/g, ' ').split(/\s+/).filter(Boolean);
+/** Local short forms that are not street types: PCH is Pacific Coast Highway (Malibu). */
+const expandAliases = (s: string) => s.replace(/\bp\.?c\.?h\b\.?/g, 'pacific coast hwy');
+
+const words = (s: string) => expandAliases(s.toLowerCase()).replace(/[^a-z0-9\s-]/g, ' ').replace(/#/g, ' ').split(/\s+/).filter(Boolean);
 
 /** Parses a street name ("W Chandler Blvd", "West Chandler Boulevard South") with no house number. */
 export function normalizeStreet(raw: string): Street {
