@@ -12,30 +12,36 @@ export interface LoadedCitations {
 
 // Bundled at build time, so loading a city makes no network request.
 const raw = (files: Record<string, unknown>) => files as Record<string, string>;
-const blocksFiles = raw(import.meta.glob('/data/*/blocks.csv', { eager: true, query: '?raw', import: 'default' }));
-const segmentFiles = raw(import.meta.glob('/data/*/segments.geojson', { eager: true, query: '?raw', import: 'default' }));
-const scheduleFiles = raw(import.meta.glob('/data/*/fine-schedule.csv', { eager: true, query: '?raw', import: 'default' }));
-const locationFiles = raw(import.meta.glob('/data/*/named-locations.csv', { eager: true, query: '?raw', import: 'default' }));
 
-function cityFile(files: Record<string, string>, id: string, name: string): string {
-  const text = files[`/data/${id}/${name}`];
-  if (text === undefined) throw new Error(`city ${id}: no ${name} found`);
-  return text;
+/** The files a city folder holds, as raw text keyed by path. `cities` is the parsed city.json glob (defaults to the bundled one). */
+export interface CityFileSet {
+  text: Record<string, string>;
+  cities?: Record<string, unknown>;
 }
 
-/** Everything the sample generator draws from, read from the city's data folder. */
-export function loadCitySource(id: string): CitationSource {
+export const bundledCityFiles: CityFileSet = {
+  text: raw(import.meta.glob('/data/*/{segments.geojson,blocks.csv,fine-schedule.csv,named-locations.csv}', { eager: true, query: '?raw', import: 'default' })),
+};
+
+function cityFile(files: CityFileSet, id: string, name: string): string {
+  const key = Object.keys(files.text).find((k) => k.endsWith(`/${id}/${name}`));
+  if (key === undefined) throw new Error(`city ${id}: no ${name} found`);
+  return files.text[key];
+}
+
+/** Everything the sample generator draws from, read from the city's data folder (AS12: the schedule is the city's own). */
+export function loadCitySource(id: string, files: CityFileSet = bundledCityFiles): CitationSource {
   return {
-    city: loadCity(id),
-    schedule: parseFineSchedule(cityFile(scheduleFiles, id, 'fine-schedule.csv')),
-    blocks: parseBlocks(cityFile(blocksFiles, id, 'blocks.csv'), cityFile(segmentFiles, id, 'segments.geojson')),
-    namedLocations: parseNamedLocations(cityFile(locationFiles, id, 'named-locations.csv')),
+    city: loadCity(id, files.cities),
+    schedule: parseFineSchedule(cityFile(files, id, 'fine-schedule.csv'), `${id}/fine-schedule.csv`),
+    blocks: parseBlocks(cityFile(files, id, 'blocks.csv'), cityFile(files, id, 'segments.geojson')),
+    namedLocations: parseNamedLocations(cityFile(files, id, 'named-locations.csv'), `${id}/named-locations.csv`),
   };
 }
 
 /** Street geometry for the local map, parsed from the city's bundled segments.geojson. */
-export function loadSegments(id: string): { type: 'FeatureCollection'; features: unknown[] } {
-  return JSON.parse(cityFile(segmentFiles, id, 'segments.geojson'));
+export function loadSegments(id: string, files: CityFileSet = bundledCityFiles): { type: 'FeatureCollection'; features: unknown[] } {
+  return JSON.parse(cityFile(files, id, 'segments.geojson'));
 }
 
 export function sampleCitations(source: CitationSource, durationMonths: number, seed?: string): LoadedCitations {

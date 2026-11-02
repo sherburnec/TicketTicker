@@ -1,0 +1,5 @@
+citation_code,citation_name,base_amount,escalated_amount,start_date,escalation_days,sample_weight
+TVC-4.12,Expired meter,40,60,,,5
+TVC 7.3.1,Overnight parking,55,80,,,3
+TVC-4.12,Expired meter,45,65,2026-01-01,,5
+LOCAL9,Fire lane,120,180,,30,1

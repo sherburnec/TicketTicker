@@ -1,0 +1,5 @@
+{"type":"FeatureCollection","features":[
+{"type":"Feature","properties":{"segment_id":"testville-1-2","street":"Main Street","from_street":"Oak Avenue","to_street":"Elm Street","city_id":"testville"},"geometry":{"type":"LineString","coordinates":[[-73.99,40.03],[-73.98,40.03]]}},
+{"type":"Feature","properties":{"segment_id":"testville-2-3","street":"Main Street","from_street":"Elm Street","to_street":"Pine Road","city_id":"testville"},"geometry":{"type":"LineString","coordinates":[[-73.98,40.03],[-73.97,40.03]]}},
+{"type":"Feature","properties":{"segment_id":"testville-2-4","street":"Elm Street","from_street":"Main Street","to_street":"Lake Drive","city_id":"testville"},"geometry":{"type":"LineString","coordinates":[[-73.98,40.03],[-73.98,40.04]]}}
+]}
