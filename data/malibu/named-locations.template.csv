@@ -1,0 +1,4 @@
+location_id,location_name,address,latitude,longitude,notes
+EXAMPLE-1,Example Shopping Center,100 Main St,,,"One row per address; repeat the id for a second address."
+EXAMPLE-1,Example Shopping Center,200 Main St,,,
+EXAMPLE-2,Example Beach,300 Beach Rd,,,

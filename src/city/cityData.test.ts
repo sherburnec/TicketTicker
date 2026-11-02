@@ -3,6 +3,9 @@ import { listCities } from './registry.ts';
 import { loadCitySource, bundledCityFiles } from '../ui/sourcePanel.ts';
 import { codeSource } from './schedule.ts';
 import { generateCitations } from '../sample/citations.ts';
+import { buildMatchIndex, matchAddress } from '../geo/matcher.ts';
+import { loadSegments } from '../ui/sourcePanel.ts';
+import { insideExtent } from '../../scripts/build-segments.ts';
 
 const fixtureText = import.meta.glob('/tests/fixtures/cities/*/*', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
 const fixtureCities = import.meta.glob('/tests/fixtures/cities/*/city.json', { eager: true, import: 'default' });
@@ -47,5 +50,40 @@ describe('per-city fine schedule', () => {
     expect(codes.size).toBeGreaterThan(1);
     for (const c of codes) expect(own.has(c), c).toBe(true);
     expect(codes.has('CVC-22500(g)')).toBe(false);
+  });
+});
+
+describe('named locations and schedules per city', () => {
+  it.each(listCities())('$id: every named location resolves through matchAddress', ({ id }) => {
+    const { blocks, namedLocations } = loadCitySource(id);
+    const index = buildMatchIndex(blocks, namedLocations);
+    expect(namedLocations.length).toBeGreaterThan(0);
+    for (const loc of namedLocations) for (const a of loc.addresses) expect(matchAddress(a, index).namedLocationId, `${loc.name}: ${a}`).toBe(loc.id);
+  });
+
+  it('each city keeps its own codes: no code appears in two city schedules', () => {
+    const seen = new Map<string, string>();
+    for (const { id } of listCities()) {
+      for (const e of loadCitySource(id).schedule) {
+        expect(seen.get(e.code) ?? id, e.code).toBe(id);
+        seen.set(e.code, id);
+      }
+    }
+  });
+
+  it('Malibu has at least five named locations', () => {
+    expect(loadCitySource('malibu').namedLocations.length).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('city segments', () => {
+  it.each(listCities())('$id: segment ids carry the city id and every vertex is inside the extent', ({ id }) => {
+    const { city } = loadCitySource(id);
+    const extent = 'bbox' in city.extent ? { bbox: city.extent.bbox } : { polygon: city.extent.polygon as [number, number][] };
+    for (const f of loadSegments(id).features as { properties: { segment_id: string; city_id: string }; geometry: { coordinates: [number, number][] } }[]) {
+      expect(f.properties.segment_id.startsWith(`${id}-`)).toBe(true);
+      expect(f.properties.city_id).toBe(id);
+      for (const [lon, lat] of f.geometry.coordinates) expect(insideExtent(extent, lon, lat)).toBe(true);
+    }
   });
 });

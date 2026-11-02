@@ -69,3 +69,32 @@ Source: OpenStreetMap via the Overpass API, `way[highway]` with a name, inside t
 - Why it is low: a block is numbered only when at least two addresses fall in one hundred. OSM segments here are long (Pacific Coast Highway has 85 segments over about 20 miles) and cover many hundreds, and canyon roads have few addresses. This is the K17 risk (a long coastal extent). Citations on unnumbered blocks will show as unmatched.
 - **[Proposed]** follow-up, not part of Phase 10: split long segments into block-length pieces, or match by address range instead of hundred. Needs the author's decision.
 - Street names missing from OSM (CAMS streets with no segment), most frequent: Las Olas Way (31 points), Seastar Dr (26), Via Escondido (21), Filaree Heights Ave (19), Broadbeach Rd (18).
+
+## Applied in task 10.9: fine schedule and named locations
+
+### Fine schedule: ALL ROWS ARE ESTIMATES (OQ13, OQ16)
+The author asked for the recommended approach to open questions, so `fine-schedule.csv` holds placeholders. **Replace every row with the real Malibu schedule before any figure goes to the city (DR-8).** Codes and amounts are invented; the `MMC EST-n` codes are not real municipal code sections, and each name ends in "(estimate)" so reports show it. Edit the file only; no code change is needed (AS12).
+
+| Code | Name | Base | Escalated | Sample weight | Status |
+| --- | --- | --- | --- | --- | --- |
+| MMC EST-1 | Expired meter / time limit (estimate) | 50 | 75 | 40 | estimate |
+| MMC EST-2 | Street sweeping (estimate) | 70 | 100 | 25 | estimate |
+| MMC EST-3 | Red curb / no-parking zone (estimate) | 75 | 110 | 15 | estimate |
+| MMC EST-4 | Beach parking without permit (estimate) | 60 | 90 | 12 | estimate |
+| MMC EST-5 | Overnight parking prohibited (estimate) | 65 | 95 | 8 | estimate |
+
+The payment window (21 days) and sample weights are also estimates. No code is shared with Burbank.
+
+### Named locations (`named-locations.csv`)
+Six places, addresses taken from the CAMS layer (so they match what citations will use):
+
+| Id | Name | Address | Note |
+| --- | --- | --- | --- |
+| MAL-1 | Malibu Pier | 23000 Pacific Coast Hwy | CAMS |
+| MAL-2 | Malibu Lagoon State Beach | 23200 Pacific Coast Hwy | CAMS |
+| MAL-3 | Zuma Beach | 30050 Pacific Coast Hwy | nearest CAMS address to the beach lot; **confirm** |
+| MAL-4 | Malibu Country Mart | 3835 Cross Creek Rd | CAMS |
+| MAL-5 | Malibu City Hall | 23825 Stuart Ranch Rd | CAMS |
+| MAL-6 | Westward Beach | 6800 Westward Beach Rd | CAMS |
+
+All six resolve to their location id through `matchAddress`. None resolves to a street block yet, because their hundred blocks on Pacific Coast Highway, Cross Creek Road, Stuart Ranch Road and Westward Beach Road are among the unnumbered blocks (see the block finding above). Named-location counts do not depend on blocks. The real parking enforcement yard and any extra named locations (OQ16) are still open.

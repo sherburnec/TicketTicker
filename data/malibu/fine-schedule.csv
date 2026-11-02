@@ -1,0 +1,6 @@
+citation_code,citation_name,base_amount,escalated_amount,start_date,escalation_days,sample_weight
+MMC EST-1,Expired meter / time limit (estimate),50,75,,,40
+MMC EST-2,Street sweeping (estimate),70,100,,,25
+MMC EST-3,Red curb / no-parking zone (estimate),75,110,,,15
+MMC EST-4,Beach parking without permit (estimate),60,90,,,12
+MMC EST-5,Overnight parking prohibited (estimate),65,95,,,8

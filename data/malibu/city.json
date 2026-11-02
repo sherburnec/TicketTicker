@@ -1,0 +1,9 @@
+{
+  "city_id": "malibu",
+  "name": "Malibu, CA",
+  "time_zone": "America/Los_Angeles",
+  "payment_window_days": 21,
+  "extent": { "bbox": [-118.95, 33.99, -118.55, 34.09] },
+  "exclusion_zones": [],
+  "depot": { "lat": 34.0378, "lon": -118.6844 }
+}

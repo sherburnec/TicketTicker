@@ -1,0 +1,7 @@
+location_id,location_name,address,latitude,longitude,notes
+MAL-1,Malibu Pier,23000 Pacific Coast Hwy,,,"Address from CAMS."
+MAL-2,Malibu Lagoon State Beach,23200 Pacific Coast Hwy,,,"Address from CAMS."
+MAL-3,Zuma Beach,30050 Pacific Coast Hwy,,,"Nearest CAMS address to the beach lot; confirm."
+MAL-4,Malibu Country Mart,3835 Cross Creek Rd,,,"Address from CAMS."
+MAL-5,Malibu City Hall,23825 Stuart Ranch Rd,,,"Address from CAMS."
+MAL-6,Westward Beach,6800 Westward Beach Rd,,,"Address from CAMS."
