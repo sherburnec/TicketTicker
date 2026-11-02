@@ -8,7 +8,7 @@ export interface ExclusionZone {
 }
 
 export interface FineEntry {
-  /** The key, e.g. "CVC-22500(g)". The prefix before "-" is the code source. */
+  /** The key, e.g. "CVC-22500(g)". The prefix before the first "-" or space is the code source. */
   code: string;
   name: string;
   base: number;

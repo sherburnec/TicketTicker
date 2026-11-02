@@ -9,7 +9,7 @@ const HEAD = 'citation_code,citation_name,base_amount,escalated_amount,start_dat
 describe('parseFineSchedule', () => {
   it('reads the Burbank schedule', () => {
     const entries = parseFineSchedule(burbankSchedule);
-    expect(entries.map((e) => e.code)).toEqual(['CVC-22500(g)', 'BMC-6-1', 'BMC-ART30']);
+    expect(entries.map((e) => e.code)).toEqual(['CVC-22500(g)', 'BMC-6-1', 'BMC-ART30', 'BMC 6-1-1101']);
     expect(entries[0]).toMatchObject({ name: 'Street sweeping', base: 75, escalated: 100, sampleWeight: 76 });
     expect(entries[0].startDate).toBeUndefined();
   });
@@ -53,6 +53,11 @@ describe('codeSource', () => {
     expect(codeSource('CVC-22500(g)')).toBe('CVC');
     expect(codeSource('BMC-ART30')).toBe('BMC');
     expect(codeSource('LOCAL')).toBe('LOCAL');
+  });
+
+  it('also splits at whitespace, so a code written "BMC 6-1-1101" has source BMC', () => {
+    expect(codeSource('BMC 6-1-1101')).toBe('BMC');
+    expect(codeSource('MMC 10.04.010')).toBe('MMC');
   });
 });
 

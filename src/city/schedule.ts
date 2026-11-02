@@ -54,9 +54,9 @@ function isoDate(file: string, line: number, field: string, raw: string): string
   return raw;
 }
 
-/** The prefix before the first "-" ("CVC-22500(g)" gives "CVC"), or the whole code when it has no dash. */
+/** The prefix before the first "-" or space ("CVC-22500(g)" gives "CVC", "BMC 6-1-1101" gives "BMC"), or the whole code when it has neither. Cities write codes their own way. */
 export function codeSource(code: string): string {
-  const i = code.indexOf('-');
+  const i = code.search(/[-\s]/);
   return i < 0 ? code : code.slice(0, i);
 }
 
