@@ -1,27 +1,10 @@
-import { inflateSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import type { BlockInfo } from '../geo/matcher.ts';
 import type { Citation, NamedLocation } from '../types.ts';
 import { buildCityPdf, buildCityReportModel } from './cityReport.ts';
+import { pdfText } from '../../tests/helpers/pdfText.ts';
 
-/** Text shown by every `(...) Tj` in the PDF's content streams, inflating them when compressed. */
-function pdfText(bytes: Uint8Array): string {
-  const raw = Buffer.from(bytes).toString('latin1');
-  const out: string[] = [];
-  for (const m of raw.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)) {
-    let body = Buffer.from(m[1], 'latin1');
-    try {
-      body = inflateSync(body);
-    } catch {
-      /* stream was not compressed */
-    }
-    // pdf-lib writes shown text as a hex string; accept a literal string too.
-    for (const t of body.toString('latin1').matchAll(/<([0-9a-fA-F\s]+)>\s*Tj|\(((?:\\.|[^\\)])*)\)\s*Tj/g)) {
-      out.push(t[1] !== undefined ? Buffer.from(t[1].replace(/\s/g, ''), 'hex').toString('latin1') : t[2].replace(/\\(.)/g, '$1'));
-    }
-  }
-  return out.join('\n');
-}
+const BURBANK = { id: 'burbank', name: 'Burbank' };
 
 const blocks: BlockInfo[] = [
   { id: 'seg-A', street: 'A Street', blockNumber: 100, lowAddress: null, highAddress: null },
@@ -44,7 +27,7 @@ const data: Citation[] = [
 ];
 
 describe('R7 city PDF', () => {
-  const model = buildCityReportModel('Burbank', data, blocks, named, ctx, '2025-03-10');
+  const model = buildCityReportModel(BURBANK, data, blocks, named, ctx, '2025-03-10');
 
   it('states the as-of date, rates with status labels, and Realized/Projected labels', async () => {
     const text = pdfText(new Uint8Array(await (await buildCityPdf(model)).arrayBuffer()));
@@ -58,7 +41,7 @@ describe('R7 city PDF', () => {
   });
 
   it('labels a manual override as Manually set', async () => {
-    const m = buildCityReportModel('Burbank', data, blocks, named, ctx, '2025-03-10', { collection: 0.5 });
+    const m = buildCityReportModel(BURBANK, data, blocks, named, ctx, '2025-03-10', { collection: 0.5 });
     const text = pdfText(new Uint8Array(await (await buildCityPdf(m)).arrayBuffer()));
     expect(text).toContain('Manually set');
   });

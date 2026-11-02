@@ -1,3 +1,4 @@
+import { csvFileName } from './filenames.ts';
 import type { PatrolImportResult } from '../patrol/importer.ts';
 import { patrolRejectsToCsv } from '../patrol/importer.ts';
 import type { PatrolSummary } from '../patrol/summary.ts';
@@ -34,7 +35,7 @@ export function emptyCellLines(s: PatrolSummary): string[] {
 }
 
 /** Summary, empty-cell list and the rejected rows with a CSV download (FR-31, FR-34). Data is set as text, never HTML. */
-export function renderPatrolSummary(root: HTMLElement, result: PatrolImportResult): void {
+export function renderPatrolSummary(root: HTMLElement, result: PatrolImportResult, cityId?: string): void {
   const { summary, rejected } = result;
   root.replaceChildren(heading('Import summary'));
   const ul = el('ul', undefined, 'plain');
@@ -71,7 +72,7 @@ export function renderPatrolSummary(root: HTMLElement, result: PatrolImportResul
     const url = URL.createObjectURL(new Blob([patrolRejectsToCsv(summary.format, rejected)], { type: 'text/csv' }));
     const a = el('a');
     a.href = url;
-    a.download = 'patrol-rejected-rows.csv';
+    a.download = csvFileName(cityId, 'patrol-rejected-rows');
     a.click();
     URL.revokeObjectURL(url);
   });

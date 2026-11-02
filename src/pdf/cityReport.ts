@@ -12,6 +12,7 @@ export const TOP_BLOCKS = 10;
  * PDF through it (RPT-5, FR-40).
  */
 export interface CityReportModel {
+  cityId: string;
   cityName: string;
   asOf: string;
   citationCount: number;
@@ -31,7 +32,7 @@ const pct = (r: number | null) => (r === null ? 'n/a' : `${(r * 100).toFixed(1)}
 
 /** Builds the R7 model from the loaded data (FR-26, RPT-4). Officer fields are never read. */
 export function buildCityReportModel(
-  cityName: string,
+  city: { id: string; name: string },
   citations: Citation[],
   blocks: BlockInfo[],
   namedLocations: NamedLocation[],
@@ -54,7 +55,8 @@ export function buildCityReportModel(
 
   const rate = (name: string, r: typeof p.rates.collection) => ({ name, computed: pct(r.computed), applied: pct(r.applied), status: r.status });
   return {
-    cityName,
+    cityId: city.id,
+    cityName: city.name,
     asOf,
     citationCount: citations.length,
     realized: p.realized.amount,

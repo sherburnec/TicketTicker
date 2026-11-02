@@ -1,3 +1,4 @@
+import { csvFileName } from './filenames.ts';
 import type { ImportResult, RejectedRow } from '../import/citations.ts';
 import { disclosure, el, heading } from './dom.ts';
 
@@ -47,7 +48,7 @@ function list(items: string[], total: number): HTMLUListElement {
 }
 
 /** Shows counts, the reject warning, flags and unmatched addresses after an import (FR-7, FR-9, FR-11). Data is set as text, never HTML. */
-export function renderImportSummary(root: HTMLElement, result: ImportResult): void {
+export function renderImportSummary(root: HTMLElement, result: ImportResult, city?: { id: string; name: string }): void {
   const { total, imported, rejected, unmatched } = result.counts;
   const n = (v: number) => v.toLocaleString();
   root.replaceChildren(heading('Import summary'));
@@ -66,7 +67,7 @@ export function renderImportSummary(root: HTMLElement, result: ImportResult): vo
     warning.append(disclosure('Show rejected rows', list(result.rejected.map((r) => `Row ${r.rowNumber}: ${r.reason}`), rejected)));
     const button = el('button', 'Download rejected rows (CSV)');
     button.type = 'button';
-    button.addEventListener('click', () => download('rejected-rows.csv', rejectsToCsv(result.rejected)));
+    button.addEventListener('click', () => download(csvFileName(city?.id, 'rejected-rows'), rejectsToCsv(result.rejected)));
     warning.append(button);
     root.append(warning);
   }

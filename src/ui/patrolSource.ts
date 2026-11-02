@@ -1,3 +1,4 @@
+import { csvFileName } from './filenames.ts';
 import type { PatrolFormat } from '../patrol/formats.ts';
 import { zoneClock } from '../patrol/time.ts';
 import { DEFAULT_SAMPLE_CONFIG } from '../sample/config.ts';
@@ -66,6 +67,7 @@ export function mountPatrolSourcePanel(
   defaultZone: string,
   onChange: () => void,
   sample?: (o: PatrolSampleOptions) => LoadedPatrol,
+  cityId?: string,
 ): void {
   root.innerHTML = `
     <fieldset>
@@ -101,7 +103,7 @@ export function mountPatrolSourcePanel(
     const url = URL.createObjectURL(new Blob([data.csv], { type: 'text/csv' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'patrol-sample.csv';
+    a.download = csvFileName(cityId, 'patrol-sample');
     a.click();
     URL.revokeObjectURL(url);
   });

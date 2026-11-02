@@ -3,7 +3,7 @@ import type { CityReportModel } from '../pdf/cityReport.ts';
 import { createExportState, previewLines } from './exportPanel.ts';
 
 const model: CityReportModel = {
-  cityName: 'Burbank', asOf: '2025-03-10', citationCount: 4, realized: 100,
+  cityId: 'burbank', cityName: 'Burbank', asOf: '2025-03-10', citationCount: 4, realized: 100,
   projected: { avg: 40, low: null, high: null, rangeNotice: 'Range hidden: test.' },
   pending: { count: 1, amount: 50 }, outstanding: { count: 1, expected: 80 },
   rates: [{ name: 'Collection rate', computed: '50.0%', applied: '60.0%', status: 'Manually set' }],

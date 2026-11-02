@@ -96,7 +96,7 @@ export function mountDashboard(app: HTMLElement, cityId: string, theme: ReturnTy
   const exportPanel = mountExportPanel(exportRoot, () => {
     const asOf = citations && asOfDate(citations.citations, ratesPanel.settings().asOf);
     if (!citations || !asOf) return undefined;
-    return buildCityReportModel(source.city.name, citations.citations, source.blocks, source.namedLocations, { schedule: source.schedule, city: source.city }, asOf, ratesPanel.settings().overrides);
+    return buildCityReportModel(source.city, citations.citations, source.blocks, source.namedLocations, { schedule: source.schedule, city: source.city }, asOf, ratesPanel.settings().overrides);
   });
   const r3 = mountR3Panel(hotspots, streetMap, () => citations && { citations: citations.citations, blocks: source.blocks, namedLocations: source.namedLocations, segments });
   const r4 = mountR4Panel(locations, () => citations && { citations: citations.citations, namedLocations: source.namedLocations });
@@ -125,7 +125,7 @@ export function mountDashboard(app: HTMLElement, cityId: string, theme: ReturnTy
           csv: data.csv, format, columns, timeZone: data.timeZone ?? source.city.timeZone,
           city: { settings: source.city, blocks: source.blocks, namedLocations: source.namedLocations, segments: format === 'B' ? segments : undefined },
         }, (d, t) => showProgress(patrolSummary, 'Importing patrol data', d, t), work.signal);
-        renderPatrolSummary(patrolSummary, result);
+        renderPatrolSummary(patrolSummary, result, source.city.id);
         patrolAggregate = result.aggregate;
         r8.refresh();
       } catch (e) {
@@ -135,7 +135,7 @@ export function mountDashboard(app: HTMLElement, cityId: string, theme: ReturnTy
     };
     if (found.missing.length === 0) done(found.format, found.mapping);
     else mountColumnMapper(patrolFormat, headers, found.format, done);
-  }, (o) => samplePatrol(patrolSource, o));
+  }, (o) => samplePatrol(patrolSource, o), source.city.id);
 
   mountSourcePanel(panel, source, async (data) => {
     try {
@@ -144,7 +144,7 @@ export function mountDashboard(app: HTMLElement, cityId: string, theme: ReturnTy
       }, work.signal);
       loaded.replaceChildren(el('p', data.label, 'source-label'));
       shell.setStatus('citations', `${data.label}: ${citations.counts.imported.toLocaleString()} citations`);
-      renderImportSummary(summary, citations);
+      renderImportSummary(summary, citations, source.city);
       ratesPanel.refresh();
       r3.refresh();
       r4.refresh();

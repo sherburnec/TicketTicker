@@ -1,5 +1,6 @@
 import { buildCityPdf, type CityReportModel } from '../pdf/cityReport.ts';
 import { money } from './ratesPanel.ts';
+import { pdfFileName } from './filenames.ts';
 import { el, emptyState, heading } from './dom.ts';
 
 export const CONFIRMATION_TEXT = 'I confirm this report includes no officer data and that the assumptions shown are correct.';
@@ -71,7 +72,7 @@ export function mountExportPanel(root: HTMLElement, model: () => CityReportModel
       const url = URL.createObjectURL(blob);
       const a = el('a');
       a.href = url;
-      a.download = `${m.cityName.toLowerCase().replace(/\W+/g, '-')}-citation-report-${m.asOf}.pdf`;
+      a.download = pdfFileName(m.cityId, m.asOf);
       a.click();
       URL.revokeObjectURL(url);
     });
