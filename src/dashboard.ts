@@ -19,7 +19,7 @@ import { asOfDate } from './revenue/schedule.ts';
 import type { createTheme } from './ui/theme.ts';
 import { mountShell } from './ui/shell.ts';
 import { el, emptyState, heading, notice } from './ui/dom.ts';
-import { citationMapLegend } from './ui/mapLegend.ts';
+import { citationMapLegend, osmCredit } from './ui/mapLegend.ts';
 
 /** Replaces `root` with a labelled progress bar. */
 function showProgress(root: HTMLElement, label: string, done: number, total: number): void {
@@ -89,6 +89,8 @@ export function mountDashboard(app: HTMLElement, cityId: string, theme: ReturnTy
   let citations: ImportResult | undefined;
   const streetMap = mountStreetMap(map, source.city, segments);
   const patrolStreetMap = mountStreetMap(patrolMap, source.city, segments);
+  map.append(osmCredit());
+  patrolMap.append(osmCredit());
   maps.push(streetMap, patrolStreetMap);
   const unsubscribeTheme = theme.subscribe((t) => maps.forEach((m) => applyMapTheme(m, t)));
 

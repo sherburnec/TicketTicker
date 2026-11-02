@@ -161,3 +161,6 @@ progress { width: 100%; max-width: 28rem; height: 0.75rem; accent-color: var(--a
 
 .city-switcher { margin-top: var(--s3); }
 .city-switcher select { width: 100%; }
+
+.map-frame { position: relative; }
+.map-credit { position: absolute; right: var(--s2); bottom: var(--s1, 0.25rem); z-index: 2; padding: 0 var(--s2); border-radius: var(--radius-sm, 4px); background: color-mix(in srgb, var(--surface) 85%, transparent); color: var(--slate); font-size: var(--text-xs, 0.7rem); pointer-events: none; }

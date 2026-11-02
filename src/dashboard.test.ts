@@ -40,6 +40,7 @@ describe('mountDashboard', () => {
     const burbank = mountDashboard(root, 'burbank', theme);
     expect(root.textContent).toContain('Burbank');
     expect(burbank.hasData()).toBe(false);
+    expect(root.textContent?.split('© OpenStreetMap contributors').length).toBe(3); // credit under both maps
     expect(maps).toHaveLength(2);
     burbank.destroy();
     expect(root.childNodes).toHaveLength(0);

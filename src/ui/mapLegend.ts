@@ -25,3 +25,8 @@ export function citationMapLegend(): HTMLElement {
   root.append(ramp, pin, coverage);
   return root;
 }
+
+/** Credit the street data requires (OpenStreetMap, ODbL). Shown inside each map frame; no remote link is loaded. */
+export function osmCredit(): HTMLElement {
+  return el('small', '© OpenStreetMap contributors (ODbL)', 'map-credit');
+}
