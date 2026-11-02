@@ -22,6 +22,7 @@ import { createTheme } from './ui/theme.ts';
 import { mountShell } from './ui/shell.ts';
 import { el, emptyState, heading, notice } from './ui/dom.ts';
 import { citationMapLegend } from './ui/mapLegend.ts';
+import { listCities } from './city/registry.ts';
 
 /** Replaces `root` with a labelled progress bar. */
 function showProgress(root: HTMLElement, label: string, done: number, total: number): void {
@@ -34,8 +35,9 @@ function showProgress(root: HTMLElement, label: string, done: number, total: num
 
 const app = document.getElementById('app');
 if (app) {
-  const source = loadCitySource('burbank');
-  const segments = loadSegments('burbank');
+  const cityId = listCities()[0].id;
+  const source = loadCitySource(cityId);
+  const segments = loadSegments(cityId);
   const theme = createTheme();
 
   // Maps are created before the shell so the shell can resize them when a hidden view is shown.
