@@ -1,11 +1,11 @@
-# Plan: Citation Insights (MVP, Burbank)
+# Plan: Citation Insights (MVP, Burbank; multi-city and Malibu in Phase 10)
 
 ## 1. Goal
-Build a static, client-side TypeScript web app on GitHub Pages that imports or generates parking citation data and produces internal reports (R1–R6), a city PDF (R7) and an optional Samsara patrol heatmap (R8). All processing stays in the browser. Burbank is the first city, and adding another city must need only a new data folder.
+Build a static, client-side TypeScript web app on GitHub Pages that imports or generates parking citation data and produces internal reports (R1–R6), a city PDF (R7) and an optional Samsara patrol heatmap (R8). All processing stays in the browser. Burbank is the first city, and adding another city must need only a new data folder. Phase 10 puts several cities in one dashboard (a city switcher) and adds Malibu, CA as the second city.
 
 ## 2. Scope
 **In scope (PRD §13 MVP):** BT-1 `blocks.csv` build script; citation sample generator; CSV import with validation and reject reporting; block matching with an unmatched list; named locations; revenue model (Realized/Projected, adjustable rates); reports R1–R7 with local map and city PDF; patrol sample generator, Format A/B import and R8.
-**Out of scope (PRD §4, §13 later):** backend, database, accounts, persistence; city login; external APIs, geocoding services, Samsara API; shift/schedule import; patrol effort metrics or patrol-to-citation/officer joins; per-officer ranking in city output; names or plates; address-point geocoding; additional cities beyond the data-folder mechanism.
+**Out of scope (PRD §4, §13 later):** backend, database, accounts, persistence; city login; external APIs, geocoding services, Samsara API; shift/schedule import; patrol effort metrics or patrol-to-citation/officer joins; per-officer ranking in city output; names or plates; address-point geocoding; combining or comparing two cities' data in one report (Phase 10 shows one city at a time); cities other than Burbank and Malibu.
 
 ## 3. Assumptions and Open Questions
 Assumptions (conservative readings, each revisable):
@@ -16,6 +16,11 @@ Assumptions (conservative readings, each revisable):
 - AS5. Settled-citation threshold (FR-22) is a config value with placeholder 30 until OQ2 is answered.
 - AS6. FR-27 is built as proposed: a pre-export preview with a confirmation that no officer data is included and assumptions are correct.
 - AS7. Manager and supervisor share one unauthenticated UI (PRD §5).
+- AS8. "Multiple cities in a single dashboard" means one app with a city switcher: the user picks one city at a time, and each city has its own data, rates, reports and PDF. No cross-city totals or comparisons (revisable; would be a new phase).
+- AS9. Switching city discards all loaded data (citations, patrol, rate overrides), after a confirmation if any is loaded. Nothing is kept per city (NFR-1).
+- AS10. The selected city may be kept in the URL hash (`#city=malibu`). It is a setting, not data, so it does not break NFR-1.
+- AS12. Each city owns its fine schedule: `data/<city>/fine-schedule.csv` may hold any number of codes, written the city's own way ("CVC-22500(g)", "BMC 6-1-1101", "MMC 10.04.010"). Nothing outside that file names a code. The code source is the prefix before the first "-" or space. Adding or editing a row needs no code change; a schedule that fails validation gives an error naming the file and line.
+- AS11. Malibu street segments come from OpenStreetMap (ODbL), as the Burbank ids (`burbank-<osm node>-<osm node>`) suggest Parklas did. Address points come from LA County CAMS, the same layer as BT-1. Malibu citation codes and amounts are `[Proposed]` placeholders until the author supplies the real schedule (OQ13 applies).
 
 Open Questions:
 - OQ1. Where is the Parklas repository, and which files (street segments, blocks report, map code) are reused? (blocks Phase 1)
@@ -32,6 +37,9 @@ Open Questions:
 - OQ12. Final grid size, gap threshold and sample patrol parameters (Q33).
 - OQ13. DR-8 says estimated fines must be replaced before figures reach the city, but no mechanism is specified. Should PDF export be blocked or flagged while estimates remain? (Assumption: no enforcement in code; the author is responsible.)
 - OQ14. LA County CAMS license terms and Burbank coverage (BT-1, verified in task 1.3).
+- OQ15. Is "multiple cities in one dashboard" a switcher (AS8) or a combined view? (Assumed: switcher.)
+- OQ16. Malibu fine schedule (codes, base and escalated amounts, payment window), named locations, depot/yard and any exclusion zones. (Phase 10 uses labelled placeholders until answered.)
+- OQ17. Which Malibu streets are in scope for citation and patrol samples; Pacific Coast Highway is a Caltrans route.
 
 ## 4. Architecture and key decisions
 - **Stack:** TypeScript, Vite, MapLibre GL JS, Vitest, GitHub Actions to Pages. Reason: inherited from Parklas (PRD §12).
@@ -50,6 +58,7 @@ Open Questions:
   - `Citation {id, date, time, code, officer, result, fineAmount, paidAmount?, paidDate?, address, blockId?, namedLocationId?, vehicleType?, vehicleColor?, flags[]}`
   - `RejectedRow {rowNumber, raw, reason}`
   - `PatrolAggregate`: sparse `Map<"cell|date|hour", value>` plus a per-vehicle key only for the R8 display filter; unit `minutes` (A) or `stops` (B). No raw points kept.
+- **City registry (Phase 10):** `src/city/registry.ts` lists every `data/<city>/city.json` bundled at build time (`listCities()→{id,name}[]`). `main.ts` mounts the dashboard for one city id and remounts on switch. No module outside the registry and the switcher names a city. Segment ids are prefixed with the city id so ids never collide.
 - **Interfaces:** `loadCity(id)`, `generateCitations(cfg)→csv`, `importCitations(csv, city)→{citations, rejected, unmatched, counts}`, `matchAddress(addr, city)`, `computeRates(citations, asOf, overrides)`, `project(...)→{avg, low, high}`, `applyFilters(citations, filter)`, `generatePatrol(cfg, format)→csv`, `importPatrol(stream, city, opts)→{aggregate, summary, rejected, excluded}`, `buildCityPdf(model)→Blob`.
 
 ## 5. Milestones
@@ -123,12 +132,29 @@ Runs differently from earlier phases: it is a design pass, not a feature build. 
 9. Responsive, accessibility and polish. Done when: usable at 1280px and 900px widths, keyboard navigable with visible focus, color contrast meets WCAG AA in the theme, `prefers-reduced-motion` respected, and empty/loading states exist for every report.
 10. Verification. Done when: `npm run build` and `npm test` pass, before/after screenshots of every report are reviewed with the author, and the manual G1 timed walkthrough (< 5 min) still holds.
 
+### Phase 10: Multiple cities in one dashboard, then Malibu, CA
+Runs in one chat. Do tasks in order, commit after each (`[10.N] ...`), and keep `npm run build` and `npm test` green throughout. Burbank behavior, the wording of required notices and the privacy rules must not change. Tasks 10.1–10.5 make the app multi-city using Burbank and the `testville` fixture only. Tasks 10.6–10.10 add Malibu as data plus one new script. Stop and ask the author only at the points marked **Ask**; elsewhere record a `[Proposed]` value, label it, and continue.
+1. Audit and city registry. Files: `src/city/registry.ts` (new), `src/city/registry.test.ts` (new). First list every hard-coded `'burbank'` and Burbank-specific string in `src/` and `scripts/` (known: `loadCitySource('burbank')` and `loadSegments('burbank')` in `src/main.ts`). Done when: `listCities()` returns Burbank from the bundled folders and, given a fixture glob, the testville fixture too (sorted by name); a test fails if a non-test file in `src/` contains a quoted city id outside the registry; the audit list is in the commit message.
+2. Per-city data loading by id. Files: `src/ui/sourcePanel.ts`, `src/city/loadCity.ts`. Files also: `docs/adding-a-city.md` (new, documents every city file and the fine-schedule columns). Done when: a test confirms every registry city has all five required files (`city.json`, `segments.geojson`, `blocks.csv`, `fine-schedule.csv`, `named-locations.csv`) and loads, a city missing one gets an error naming the file, and Burbank output is unchanged. Per-city fine schedule (AS12): for every registry city, the schedule is non-empty and passes `parseFineSchedule`; a fixture schedule with differently styled codes (dash, space and dotted) loads, resolves by date and gets the right code source; and a seeded sample for a city draws only codes from that city's own schedule (the testville fixture, with its own codes, shows none of Burbank's).
+3. Dashboard mount and teardown. Files: `src/main.ts`, `src/dashboard.ts` (new). Done when: the body of `main.ts` moves into `mountDashboard(root, cityId): {destroy()}`; `destroy()` removes DOM, workers, map instances and listeners; a test mounts Burbank, destroys it, mounts testville, and finds no leftover nodes, workers or Burbank text.
+4. City switcher and state reset. Files: `src/ui/citySwitcher.ts` (new), `src/ui/shell.ts`, `src/ui/shell.css`. Done when: the header shows a labelled, keyboard-operable city selector (hidden if only one city exists); changing city asks for confirmation when citations, patrol data or rate overrides are loaded (AS9), then remounts with the empty "No citation data loaded" state; the choice is read from and written to `#city=<id>` (AS10); an unknown id falls back to the first city with a visible notice. Tests cover switch with and without loaded data, cancel keeping data, and the hash round trip.
+5. City-scoped outputs. Files: `src/pdf/cityReport.ts`, `src/ui/exportPanel.ts`, `src/ui/importSummary.ts`, `src/sample/citations.ts`. Done when: the PDF title and file name (`<city-id>-citation-report-<as-of>.pdf`), the import summary, and downloaded sample and rejects CSV names carry the active city; a test switches city and confirms the extracted PDF text names only the active city; the RPT-5 no-officer/no-patrol test still passes for both cities; the R1 code table and the code filter list only the active city's schedule codes.
+6. Malibu license and coverage check (extends BT-1). Files: `data/malibu/SOURCES.md` (new). Done when: it records the CAMS `LegalComm='Malibu'` point count and source-field breakdown (same query pattern as `data/burbank/SOURCES.md`), OpenStreetMap ODbL attribution and share-alike notes for the segments, and the sources for the extent and time zone. **Ask:** the author approves the findings before any Malibu data is committed.
+7. Malibu street segments. Files: `scripts/build-segments.ts` (new, Node, never shipped), `scripts/build-segments.test.ts` (new), `data/malibu/segments.geojson` (new). Done when: the script takes a city id, reads its `extent` from `city.json`, fetches named drivable streets from OpenStreetMap (Overpass), splits them at intersections and writes Burbank's feature shape (`segment_id` = `<city>-<osm node>-<osm node>`, `street`, `from_street`, `to_street`, `city_id`); unit tests cover splitting, naming and id prefixing on a small fixture; Malibu output contains Pacific Coast Highway, Malibu Canyon Road, Kanan Dume Road and Las Flores Canyon Road, and every feature lies inside the extent. Never overwrite `data/burbank/segments.geojson`.
+8. Malibu settings and blocks. Files: `data/malibu/city.json` (new), `data/malibu/blocks.csv`, `data/malibu/blocks-report.md` (generated), `scripts/build-blocks.ts`, `src/geo/normalize.ts`, `src/geo/geo.test.ts`. Done when: `city.json` has `city_id` `malibu`, name `Malibu, CA`, `America/Los_Angeles`, a bbox extent covering the city limits, and a depot; guessed values (payment window, depot near City Hall, no exclusion zones) are listed in `SOURCES.md` for OQ16; `node scripts/build-blocks.ts malibu` produces `blocks.csv` and lists blocks lacking numbers; normalization tests cover Malibu forms (`Pacific Coast Hwy`, `PCH`, `Malibu Canyon Rd`, five-digit numbers such as `23250 Pacific Coast Hwy`, ZIP `90265`, trailing `Malibu CA`) and all Burbank normalization tests still pass.
+9. Malibu fine schedule and named locations. Files: `data/malibu/fine-schedule.csv`, `data/malibu/named-locations.csv`, `data/malibu/named-locations.template.csv`. Done when: the files use Burbank's columns and Malibu's own code style; **Ask:** the author supplies the real codes and amounts, or approves placeholders, in which case each placeholder row is marked as an estimate in `SOURCES.md` (OQ13); the schedule may have as many rows as Malibu needs and uses its own codes, none copied from Burbank; `parseFineSchedule` accepts the file and the blank-start-date rule holds; at least five well-known named locations (for example Malibu Pier, Malibu Lagoon State Beach, Zuma Beach, Malibu Country Mart, City Hall) resolve through `matchAddress` against Malibu blocks, with addresses taken from CAMS.
+10. Malibu end to end and acceptance across cities. Files: `tests/acceptance/citationRoundtrip.test.ts`, `tests/acceptance/patrolRoundtrip.test.ts`, `tests/acceptance/cities.test.ts` (new). Done when: the FR-4a and FR-45 acceptance tests run for every registry city (`describe.each(listCities())`) with 0 rejected, 0 unmatched and 0 outside-extent; Malibu's block match rate on real-format input is printed and any shortfall against Burbank is reported to the author; `npm run build` and `npm test` pass; in `npm run preview` the switcher moves between Burbank and Malibu, the Malibu map shows the coastline streets and hotspots, and the Malibu PDF exports behind the pre-export confirmation; screenshots of each city's R3 and R8 views are reviewed with the author.
+
 ## 6. Risks
 - K1 Incomplete block matching: build `blocks.csv` first, normalize addresses, show unmatched list and match rate.
 - K10 Samsara format differs: support A and B with aliases and column mapper; rework when a real export arrives (OQ10).
 - K5 Real or officer data exposure: `.gitignore` and CI guard, RPT-5 PDF text test, pre-export preview.
 - K7/K15 Browser performance: workers, streaming, aggregate-only patrol storage, Phase 8 volume tests.
 - K3 Projections misread: mandatory labels, computed/manual status, as-of date, low/high range, estimate fines (OQ13).
+- K17 Second city exposes Burbank assumptions (hard-coded ids, five-digit house numbers, a long coastal extent with ocean): registry-only city ids test (10.1), Malibu normalization tests (10.8), acceptance tests across cities (10.10).
+- K18 Malibu data quality or license (OSM share-alike, CAMS terms, Caltrans-owned PCH, placeholder fines): SOURCES.md approval gate (10.6), placeholder rows labelled as estimates (10.9), no figures go to a city before the author replaces them.
+- K20 A city's fine schedule is treated as fixed or Burbank-shaped (code style, row count, code-source parsing): AS12, schedule tests in 10.2, own-codes-only sample test, Malibu schedule in 10.9.
+- K19 Stale state after a city switch leaks one city's data into another's report or PDF: full teardown (10.3), confirmation and empty state (10.4), PDF city-name test (10.5).
 - K16 UI overhaul regresses required labels, notices or privacy rules: keep existing tests green, restyle without changing wording of FR-22/FR-24/RPT-3/RPT-5 text, review screenshots with the author (Phase 9).
 
 ## 7. Verification
@@ -147,4 +173,6 @@ Runs differently from earlier phases: it is a design pass, not a feature build. 
 | FR-28–FR-46, DR-13–DR-15, RPT-8–RPT-11 | Phase 7 |
 | NFR-1–NFR-7 | Tasks 1.1, 1.2, 5.2, 8.1, 8.2 |
 | UI overhaul (no behavior change) | Phase 9 tasks 9.1–9.10; existing tests green; author screenshot review |
+| FR-13 (new city = data folder), multi-city dashboard | Tasks 10.1–10.5; registry and teardown tests |
+| Malibu, CA added | Tasks 10.6–10.10; acceptance tests run for every city |
 | FR-4a / FR-45 acceptance | `tests/acceptance/*` in CI |
