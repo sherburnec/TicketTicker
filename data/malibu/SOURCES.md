@@ -98,3 +98,13 @@ Six places, addresses taken from the CAMS layer (so they match what citations wi
 | MAL-6 | Westward Beach | 6800 Westward Beach Rd | CAMS |
 
 All six resolve to their location id through `matchAddress`. None resolves to a street block yet, because their hundred blocks on Pacific Coast Highway, Cross Creek Road, Stuart Ranch Road and Westward Beach Road are among the unnumbered blocks (see the block finding above). Named-location counts do not depend on blocks. The real parking enforcement yard and any extra named locations (OQ16) are still open.
+
+## Task 10.10: match rate against Burbank (checked 2026-11-02)
+Every CAMS address point of each city, written "<number> <street>", run through `matchAddress` against that city's committed blocks:
+
+| City | Blocks numbered | CAMS addresses matching a block |
+| --- | --- | --- |
+| Burbank | 1,182 of 2,582 (45.8%) | 13,481 of 27,881 (48.4%) |
+| Malibu | 164 of 1,378 (11.9%) | 1,774 of 6,275 (28.3%) |
+
+Malibu is below Burbank on both measures. Real Malibu citations will show more unmatched addresses than Burbank's, concentrated on Pacific Coast Highway and the canyon roads. Sample data is unaffected (generated only from numbered blocks, 0 unmatched). Options for the author, not done: split long OSM segments into block-length pieces, widen the 40 m match distance, or hand-enter block numbers (`blocks-report.md`).
