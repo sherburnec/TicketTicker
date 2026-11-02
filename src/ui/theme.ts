@@ -37,10 +37,11 @@ export function createTheme(root: HTMLElement = document.documentElement, query:
     cycle(): void {
       this.set(nextChoice(choice));
     },
-    /** Called with the resolved theme now and on every change, so maps can restyle. */
-    subscribe(fn: (t: ResolvedTheme) => void): void {
+    /** Called with the resolved theme now and on every change, so maps can restyle. Returns the unsubscribe function. */
+    subscribe(fn: (t: ResolvedTheme) => void): () => void {
       listeners.add(fn);
       fn(resolved());
+      return () => listeners.delete(fn);
     },
   };
 }

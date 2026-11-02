@@ -42,6 +42,8 @@ export interface Shell {
   show(view: ViewId): void;
   /** One-line status shown in the navigation rail for each data set. */
   setStatus(view: ViewId, text: string): void;
+  /** Removes the page-level listeners and the shell's DOM from `app`. */
+  destroy(): void;
 }
 
 /**
@@ -80,13 +82,15 @@ export function mountShell(app: HTMLElement, cityName: string, theme: ReturnType
   }
   toggle.addEventListener('click', () => setOpen(!open));
   scrim.addEventListener('click', () => setOpen(false));
-  document.addEventListener('keydown', (e) => {
+  const onKeydown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && open && narrow?.matches) {
       setOpen(false);
       toggle.focus();
     }
-  });
-  narrow?.addEventListener('change', () => setOpen(!narrow.matches));
+  };
+  const onNarrowChange = () => setOpen(!narrow!.matches);
+  document.addEventListener('keydown', onKeydown);
+  narrow?.addEventListener('change', onNarrowChange);
   const closeIfNarrow = () => narrow?.matches && setOpen(false);
 
   for (const v of VIEWS) {
@@ -159,6 +163,13 @@ export function mountShell(app: HTMLElement, cityName: string, theme: ReturnType
     show,
     setStatus(view, text) {
       views.get(view)!.status.textContent = text;
+    },
+    destroy() {
+      document.removeEventListener('keydown', onKeydown);
+      narrow?.removeEventListener('change', onNarrowChange);
+      app.classList.remove('shell', 'rail-collapsed');
+      if (!app.getAttribute('class')) app.removeAttribute('class');
+      app.replaceChildren();
     },
   };
 }

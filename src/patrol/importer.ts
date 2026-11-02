@@ -275,7 +275,7 @@ export type PatrolMessage =
   | { type: 'error'; message: string };
 
 /** Runs the import in a Web Worker so a large file does not freeze the page (FR-30, NFR-6). */
-export function importPatrolInWorker(request: PatrolRequest, onProgress?: (done: number, total: number) => void): Promise<PatrolImportResult> {
+export function importPatrolInWorker(request: PatrolRequest, onProgress?: (done: number, total: number) => void, signal?: AbortSignal): Promise<PatrolImportResult> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('../workers/patrolWorker.ts', import.meta.url), { type: 'module' });
     worker.onmessage = (e: MessageEvent<PatrolMessage>) => {
@@ -289,6 +289,14 @@ export function importPatrolInWorker(request: PatrolRequest, onProgress?: (done:
       worker.terminate();
       reject(new Error(e.message || 'The patrol import worker failed.'));
     };
+    if (signal) {
+      const stop = () => {
+        worker.terminate();
+        reject(new Error('Import cancelled.'));
+      };
+      if (signal.aborted) stop();
+      else signal.addEventListener('abort', stop, { once: true });
+    }
     worker.postMessage(request satisfies PatrolRequest);
   });
 }
