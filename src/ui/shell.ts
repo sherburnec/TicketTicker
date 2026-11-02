@@ -50,7 +50,7 @@ export interface Shell {
  * Builds the page frame: a navigation rail (views, sections, status, theme) and one content area per view.
  * Citation and patrol reports live in separate views so patrol data is never mixed into citation pages (FR-28).
  */
-export function mountShell(app: HTMLElement, cityName: string, theme: ReturnType<typeof createTheme>, onShow: (view: ViewId) => void): Shell {
+export function mountShell(app: HTMLElement, cityName: string, theme: ReturnType<typeof createTheme>, onShow: (view: ViewId) => void, cityControl?: HTMLElement): Shell {
   const sections: Record<string, HTMLElement> = {};
   const views = new Map<ViewId, { page: HTMLElement; link: HTMLAnchorElement; sub: HTMLElement; status: HTMLElement }>();
 
@@ -58,6 +58,7 @@ export function mountShell(app: HTMLElement, cityName: string, theme: ReturnType
   rail.id = 'rail';
   const brand = el('div', undefined, 'brand');
   brand.append(el('strong', 'Citation Insights'), el('span', cityName, 'muted'));
+  if (cityControl) brand.append(cityControl);
   const nav = el('nav');
   nav.setAttribute('aria-label', 'Views and sections');
   const main = el('main');

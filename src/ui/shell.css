@@ -158,3 +158,6 @@ progress { width: 100%; max-width: 28rem; height: 0.75rem; accent-color: var(--a
 }
 
 .heat-high { color: var(--accent-ink); }
+
+.city-switcher { margin-top: var(--s3); }
+.city-switcher select { width: 100%; }

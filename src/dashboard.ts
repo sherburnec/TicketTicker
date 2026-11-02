@@ -33,10 +33,13 @@ function showProgress(root: HTMLElement, label: string, done: number, total: num
 /** What `mountDashboard` returns. `destroy` removes the dashboard's DOM, maps, workers and listeners. */
 export interface Dashboard {
   destroy(): void;
+  /** True when citations, patrol data or rate changes are loaded, so a city switch must confirm (AS9). */
+  hasData(): boolean;
 }
 
 /** Mounts the dashboard for one city into `app`. All state is in memory and is dropped on `destroy` (NFR-1, AS9). */
-export function mountDashboard(app: HTMLElement, cityId: string, theme: ReturnType<typeof createTheme>, files: CityFileSet = bundledCityFiles): Dashboard {
+export function mountDashboard(app: HTMLElement, cityId: string, theme: ReturnType<typeof createTheme>, opts: { files?: CityFileSet; cityControl?: HTMLElement } = {}): Dashboard {
+  const files = opts.files ?? bundledCityFiles;
   const source = loadCitySource(cityId, files);
   const segments = loadSegments(cityId, files);
   const work = new AbortController();
@@ -45,7 +48,7 @@ export function mountDashboard(app: HTMLElement, cityId: string, theme: ReturnTy
 
   // Maps are created before the shell so the shell can resize them when a hidden view is shown.
   const maps: ReturnType<typeof mountStreetMap>[] = [];
-  const shell = mountShell(app, source.city.name, theme, () => requestAnimationFrame(() => destroyed || maps.forEach((m) => m.resize())));
+  const shell = mountShell(app, source.city.name, theme, () => requestAnimationFrame(() => destroyed || maps.forEach((m) => m.resize())), opts.cityControl);
   const s = shell.sections;
 
   const panel = el('div');
@@ -156,6 +159,10 @@ export function mountDashboard(app: HTMLElement, cityId: string, theme: ReturnTy
   shell.show('citations');
 
   return {
+    hasData() {
+      const { asOf, overrides } = ratesPanel.settings();
+      return citations !== undefined || patrol.get() !== undefined || asOf !== undefined || Object.keys(overrides).length > 0;
+    },
     destroy() {
       destroyed = true;
       work.abort();

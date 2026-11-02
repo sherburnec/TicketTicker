@@ -39,13 +39,14 @@ describe('mountDashboard', () => {
 
     const burbank = mountDashboard(root, 'burbank', theme);
     expect(root.textContent).toContain('Burbank');
+    expect(burbank.hasData()).toBe(false);
     expect(maps).toHaveLength(2);
     burbank.destroy();
     expect(root.childNodes).toHaveLength(0);
     expect(root.className).toBe('');
     expect(maps.every((m) => m.remove.mock.calls.length === 1)).toBe(true);
 
-    const testville = mountDashboard(root, 'testville', theme, fixtures);
+    const testville = mountDashboard(root, 'testville', theme, { files: fixtures });
     expect(root.textContent).toContain('Testville');
     expect(root.textContent).not.toContain('Burbank');
     expect(document.body.textContent).not.toContain('Burbank');
